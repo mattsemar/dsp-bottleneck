@@ -1,6 +1,6 @@
 {
     "name":  "Bottleneck",
-    "version_number":  "0.0.1",
+    "version_number":  "0.0.3",
     "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
     "description":  "Adds some info about production bottlenecks to stats view",
     "dependencies":  [

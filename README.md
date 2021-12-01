@@ -19,6 +19,12 @@ For now installation is only supported through a mod manager
 
 ## Changelog
 
+### v0.0.3
+Bugfix: fixed exception in stats view when no tech is currently being researched. (Thanks Valoneu for report)
+
+### v0.0.2
+Stopgap bugfix, ended up being useless
+
 ### v0.0.1
 Initial version
 

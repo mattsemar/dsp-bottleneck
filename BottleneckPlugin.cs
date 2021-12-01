@@ -143,7 +143,7 @@ namespace Bottleneck
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), "ComputeDisplayEntries")]
         public static void UIProductionStatWindow_ComputeDisplayEntries_Prefix(UIStatisticsWindow __instance)
         {
-            if (_instance == null)
+            if (_instance == null || __instance == null)
                 return;
             _instance.RecordEntryData(__instance);
         }
@@ -157,8 +157,6 @@ namespace Bottleneck
                 // no need to run every frame
                 return;
             }
-            if (planetUsageMode && deficitMode)
-                Log.Warn($"screwed something up since Time.frameCount ({Time.frameCount}) % 53 == 0 && % 23 == 0");
 
             if (planetUsageMode)
             {
@@ -171,39 +169,41 @@ namespace Bottleneck
                 }
 
                 _enableMadeOn = true;
-                return;
             }
 
-            ProductionDeficit.Clear();
-
-            if (uiStatsWindow.astroFilter == -1)
+            if (deficitMode)
             {
-                int factoryCount = uiStatsWindow.gameData.factoryCount;
-                for (int i = 0; i < factoryCount; i++)
+                ProductionDeficit.Clear();
+
+                if (uiStatsWindow.astroFilter == -1)
                 {
-                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], false);
-                }
-
-                _enableMadeOn = true;
-            }
-            else if (uiStatsWindow.astroFilter == 0)
-            {
-                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
-            }
-            else if (uiStatsWindow.astroFilter % 100 > 0)
-            {
-                PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
-                AddPlanetFactoryData(planetData.factory, false);
-            }
-            else if (uiStatsWindow.astroFilter % 100 == 0)
-            {
-                int starId = uiStatsWindow.astroFilter / 100;
-                StarData starData = uiStatsWindow.gameData.galaxy.StarById(starId);
-                for (int j = 0; j < starData.planetCount; j++)
-                {
-                    if (starData.planets[j].factory != null)
+                    int factoryCount = uiStatsWindow.gameData.factoryCount;
+                    for (int i = 0; i < factoryCount; i++)
                     {
-                        AddPlanetFactoryData(starData.planets[j].factory, false);
+                        AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], false);
+                    }
+
+                    _enableMadeOn = true;
+                }
+                else if (uiStatsWindow.astroFilter == 0)
+                {
+                    AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+                }
+                else if (uiStatsWindow.astroFilter % 100 > 0)
+                {
+                    PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
+                    AddPlanetFactoryData(planetData.factory, false);
+                }
+                else if (uiStatsWindow.astroFilter % 100 == 0)
+                {
+                    int starId = uiStatsWindow.astroFilter / 100;
+                    StarData starData = uiStatsWindow.gameData.galaxy.StarById(starId);
+                    for (int j = 0; j < starData.planetCount; j++)
+                    {
+                        if (starData.planets[j].factory != null)
+                        {
+                            AddPlanetFactoryData(starData.planets[j].factory, false);
+                        }
                     }
                 }
             }
@@ -396,7 +396,6 @@ namespace Bottleneck
         {
             var factorySystem = planetFactory.factorySystem;
             var veinPool = planetFactory.planet.factory.veinPool;
-
             if (planetUsage)
                 for (int i = 1; i < factorySystem.minerCursor; i++)
                 {
@@ -436,6 +435,7 @@ namespace Bottleneck
                     else ProductionDeficit.RecordDeficit(productId, assembler, planetFactory);
                 }
             }
+
 
             if (planetUsage)
                 for (int i = 1; i < factorySystem.fractionateCursor; i++)
@@ -493,7 +493,7 @@ namespace Bottleneck
                         else ProductionDeficit.RecordDeficit(productId, lab, planetFactory);
                     }
                 }
-                else if (lab.researchMode && planetUsage)
+                else if (lab.researchMode && planetUsage && lab.techId > 0)
                 {
                     var techProto = LDB.techs.Select(lab.techId);
                     for (int index = 0; index < techProto.itemArray.Length; ++index)
