@@ -26,7 +26,7 @@ namespace Bottleneck
 
 
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
-        private int _targetItemId;
+        private int _targetItemId = -1;
         private GameObject _textGo;
         private Button _btn;
         private Sprite _filterSprite;
@@ -34,11 +34,12 @@ namespace Bottleneck
 
         private void Awake()
         {
+            Log.logger = Logger;
             _instance = this;
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
         internal void OnDestroy()
@@ -63,6 +64,7 @@ namespace Bottleneck
             {
                 Destroy(_precursorCheckBoxImage.gameObject);
             }
+
             if (_btn != null && _btn.gameObject != null)
                 Destroy(_btn.gameObject);
 
@@ -76,6 +78,7 @@ namespace Bottleneck
             {
                 Destroy(obj);
             }
+
             objsToDestroy.Clear();
 
             foreach (BottleneckProductEntryElement element in _uiElements.Values)
@@ -104,8 +107,8 @@ namespace Bottleneck
                 _instance.FilterEntries(__instance);
             }
         }
-        
-        
+
+
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnUpdate")]
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
         {
@@ -147,36 +150,50 @@ namespace Bottleneck
 
         private void RecordEntryData(UIStatisticsWindow uiStatsWindow)
         {
-            if (Time.frameCount % 20 != 0)
+            bool planetUsageMode = Time.frameCount % 53 == 0;
+            bool deficitMode = Time.frameCount % 23 == 0;
+            if (!planetUsageMode && !deficitMode)
             {
                 // no need to run every frame
                 return;
             }
+            if (planetUsageMode && deficitMode)
+                Log.Warn($"screwed something up since Time.frameCount ({Time.frameCount}) % 53 == 0 && % 23 == 0");
 
-            
-            _productionLocations.Clear();    
+            if (planetUsageMode)
+            {
+                _productionLocations.Clear();
+                _countedConsumers.Clear();
+                _countedProducers.Clear();
+                for (int i = 0; i < uiStatsWindow.gameData.factoryCount; i++)
+                {
+                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], true);
+                }
+
+                _enableMadeOn = true;
+                return;
+            }
+
             ProductionDeficit.Clear();
-            _countedProducers.Clear();
-            _countedConsumers.Clear();
-            _enableMadeOn = false;
+
             if (uiStatsWindow.astroFilter == -1)
             {
                 int factoryCount = uiStatsWindow.gameData.factoryCount;
                 for (int i = 0; i < factoryCount; i++)
                 {
-                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i]);
+                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], false);
                 }
 
                 _enableMadeOn = true;
             }
             else if (uiStatsWindow.astroFilter == 0)
             {
-                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory);
+                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
             }
             else if (uiStatsWindow.astroFilter % 100 > 0)
             {
                 PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
-                AddPlanetFactoryData(planetData.factory);
+                AddPlanetFactoryData(planetData.factory, false);
             }
             else if (uiStatsWindow.astroFilter % 100 == 0)
             {
@@ -186,11 +203,9 @@ namespace Bottleneck
                 {
                     if (starData.planets[j].factory != null)
                     {
-                        AddPlanetFactoryData(starData.planets[j].factory);
+                        AddPlanetFactoryData(starData.planets[j].factory, false);
                     }
                 }
-
-                _enableMadeOn = true;
             }
         }
 
@@ -218,14 +233,14 @@ namespace Bottleneck
                     if (_enableMadeOn)
                     {
                         elt.precursorButton.tips.tipText = "<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
-                        if (_productionLocations[productId].PlanetCount() > 5)
+                        if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         {
-                            elt.precursorButton.tips.tipTitle += $" (top 5 / {_productionLocations[productId].PlanetCount()} planets)";
+                            elt.precursorButton.tips.tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
                         }
                     }
                     else
                     {
-                        elt.precursorButton.tips.tipText = "Produced on not shown when single planet selected";
+                        elt.precursorButton.tips.tipText = "Production planets not shown when single planet selected";
                     }
 
                     var deficitItemName = ProductionDeficit.MostNeeded(productId);
@@ -238,8 +253,6 @@ namespace Bottleneck
                 {
                     elt.precursorButton.tips.tipText = "";
                 }
-
-                // elt.precursorButton.gameObject.SetActive(_enableMadeOn);
             }
 
             if (elt.successorButton != null)
@@ -253,18 +266,16 @@ namespace Bottleneck
 
                 if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
                 {
-                    elt.successorButton.tips.tipText = _productionLocations[productId].GetConsumerSummary();
-                    if (_productionLocations[productId].ConsumerPlanetCount() > 5)
+                    elt.successorButton.tips.tipText = "<b>Consumed on</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
+                    if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
                     {
-                        elt.successorButton.tips.tipTitle += $" (top 5 / {_productionLocations[productId].ConsumerPlanetCount()} planets)";
+                        elt.successorButton.tips.tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].ConsumerPlanetCount()} planets)";
                     }
                 }
                 else
                 {
                     elt.successorButton.tips.tipText = "";
                 }
-
-                // elt.successorButton.gameObject.SetActive(_enableMadeOn);
             }
         }
 
@@ -276,12 +287,12 @@ namespace Bottleneck
 
         private BottleneckProductEntryElement EnhanceElement(UIProductEntry __instance)
         {
-            var precursorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn3, new Vector2(120, 80), __instance.entryData.itemId,
-                _ => { UpdatePrecursorFilter(__instance.entryData.itemId); }, "", _filterSprite);
+            var precursorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn1, new Vector2(120 + 47, 80), __instance.entryData.itemId,
+                _ => { UpdatePrecursorFilter(__instance.entryData.itemId); }, _filterSprite);
 
             objsToDestroy.Add(precursorButton.gameObject);
-            var successorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn3, new Vector2(120, 0), __instance.entryData.itemId,
-                _ => { UpdatePrecursorFilter(__instance.entryData.itemId, true); }, "", _filterSprite);
+            var successorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn1, new Vector2(120 + 47, 0), __instance.entryData.itemId,
+                _ => { UpdatePrecursorFilter(__instance.entryData.itemId, true); }, _filterSprite);
             objsToDestroy.Add(successorButton.gameObject);
             var result = new BottleneckProductEntryElement
             {
@@ -335,9 +346,10 @@ namespace Bottleneck
                 }
             }
         }
+
         private void AddEnablePrecursorFilterButton(UIStatisticsWindow uiStatisticsWindow)
         {
-            _filterSprite =     Sprite.Create(filterTexture, new Rect(0, 0, filterTexture.width * 0.75f, filterTexture.height * 0.75f), new Vector2(0.5f, 0.5f));
+            _filterSprite = Sprite.Create(filterTexture, new Rect(0, 0, filterTexture.width * 0.75f, filterTexture.height * 0.75f), new Vector2(0.5f, 0.5f));
             _enablePrecursorGO = new GameObject("enablePrecursor");
             RectTransform rect = _enablePrecursorGO.AddComponent<RectTransform>();
             rect.SetParent(uiStatisticsWindow.productSortBox.transform.parent, false);
@@ -380,83 +392,87 @@ namespace Bottleneck
             _textGo = text.gameObject;
         }
 
-        public void AddPlanetFactoryData(PlanetFactory planetFactory)
+        public void AddPlanetFactoryData(PlanetFactory planetFactory, bool planetUsage)
         {
             var factorySystem = planetFactory.factorySystem;
             var veinPool = planetFactory.planet.factory.veinPool;
 
-            for (int i = 1; i < factorySystem.minerCursor; i++)
-            {
-                var miner = factorySystem.minerPool[i];
-                if (i != miner.id) continue;
-
-                var productId = miner.productId;
-                var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
-
-                if (miner.type == EMinerType.Water)
+            if (planetUsage)
+                for (int i = 1; i < factorySystem.minerCursor; i++)
                 {
-                    productId = planetFactory.planet.waterItemId;
-                }
-                else if (productId == 0)
-                {
-                    productId = veinPool[veinId].productId;
-                }
+                    var miner = factorySystem.minerPool[i];
+                    if (i != miner.id) continue;
 
-                if (productId == 0) continue;
-                AddPlanetaryProduction(productId, planetFactory.planet, miner.entityId);
-            }
+                    var productId = miner.productId;
+                    var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
+
+                    if (miner.type == EMinerType.Water)
+                    {
+                        productId = planetFactory.planet.waterItemId;
+                    }
+                    else if (productId == 0)
+                    {
+                        productId = veinPool[veinId].productId;
+                    }
+
+                    if (productId == 0) continue;
+                    AddPlanetaryUsage(productId, planetFactory.planet, miner.entityId);
+                }
 
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
             {
                 var assembler = factorySystem.assemblerPool[i];
                 if (assembler.id != i || assembler.recipeId == 0) continue;
 
-                foreach (var productId in assembler.requires)
-                {
-                    AddPlanetaryProduction(productId, planetFactory.planet, assembler.entityId, true);
-                }
+                if (planetUsage)
+                    foreach (var productId in assembler.requires)
+                    {
+                        AddPlanetaryUsage(productId, planetFactory.planet, assembler.entityId, true);
+                    }
 
                 foreach (var productId in assembler.products)
                 {
-                    AddPlanetaryProduction(productId, planetFactory.planet, assembler.entityId);
-                    ProductionDeficit.RecordDeficit(productId, assembler, planetFactory);
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, assembler.entityId);
+                    else ProductionDeficit.RecordDeficit(productId, assembler, planetFactory);
                 }
             }
 
-            for (int i = 1; i < factorySystem.fractionateCursor; i++)
-            {
-                var fractionator = factorySystem.fractionatePool[i];
-                if (fractionator.id != i) continue;
-
-                if (fractionator.fluidId != 0)
+            if (planetUsage)
+                for (int i = 1; i < factorySystem.fractionateCursor; i++)
                 {
-                    var productId = fractionator.fluidId;
-                    AddPlanetaryProduction(productId, planetFactory.planet, fractionator.entityId, true);
+                    var fractionator = factorySystem.fractionatePool[i];
+                    if (fractionator.id != i) continue;
+
+                    if (fractionator.fluidId != 0)
+                    {
+                        var productId = fractionator.fluidId;
+                        AddPlanetaryUsage(productId, planetFactory.planet, fractionator.entityId, true);
+                    }
+
+                    if (fractionator.productId != 0)
+                    {
+                        var productId = fractionator.productId;
+
+                        AddPlanetaryUsage(productId, planetFactory.planet, fractionator.entityId);
+                    }
                 }
 
-                if (fractionator.productId != 0)
+            if (planetUsage)
+                for (int i = 1; i < factorySystem.ejectorCursor; i++)
                 {
-                    var productId = fractionator.productId;
-
-                    AddPlanetaryProduction(productId, planetFactory.planet, fractionator.entityId);
+                    var ejector = factorySystem.ejectorPool[i];
+                    if (ejector.id != i) continue;
+                    AddPlanetaryUsage(ejector.bulletId, planetFactory.planet, ejector.entityId, true);
                 }
-            }
 
-            for (int i = 1; i < factorySystem.ejectorCursor; i++)
-            {
-                var ejector = factorySystem.ejectorPool[i];
-                if (ejector.id != i) continue;
-                AddPlanetaryProduction(ejector.bulletId, planetFactory.planet, ejector.entityId, true);
-            }
+            if (planetUsage)
+                for (int i = 1; i < factorySystem.siloCursor; i++)
+                {
+                    var silo = factorySystem.siloPool[i];
+                    if (silo.id != i) continue;
 
-            for (int i = 1; i < factorySystem.siloCursor; i++)
-            {
-                var silo = factorySystem.siloPool[i];
-                if (silo.id != i) continue;
-
-
-                AddPlanetaryProduction(silo.bulletId, planetFactory.planet, silo.entityId, true);
-            }
+                    AddPlanetaryUsage(silo.bulletId, planetFactory.planet, silo.entityId, true);
+                }
 
             for (int i = 1; i < factorySystem.labCursor; i++)
             {
@@ -465,61 +481,63 @@ namespace Bottleneck
 
                 if (lab.matrixMode)
                 {
-                    foreach (var productId in lab.requires)
-                    {
-                        AddPlanetaryProduction(productId, planetFactory.planet, lab.entityId, true);
-                    }
+                    if (planetUsage)
+                        foreach (var productId in lab.requires)
+                        {
+                            AddPlanetaryUsage(productId, planetFactory.planet, lab.entityId, true);
+                        }
 
                     foreach (var productId in lab.products)
                     {
-                        AddPlanetaryProduction(productId, planetFactory.planet, lab.entityId);
-                        ProductionDeficit.RecordDeficit(productId, lab);
+                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, lab.entityId);
+                        else ProductionDeficit.RecordDeficit(productId, lab, planetFactory);
                     }
                 }
-                else if (lab.researchMode)
+                else if (lab.researchMode && planetUsage)
                 {
                     var techProto = LDB.techs.Select(lab.techId);
                     for (int index = 0; index < techProto.itemArray.Length; ++index)
                     {
                         var item = techProto.Items[index];
-                        AddPlanetaryProduction(item, planetFactory.planet, lab.entityId, true);
+                        AddPlanetaryUsage(item, planetFactory.planet, lab.entityId, true);
                     }
                 }
             }
 
-            for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
-            {
-                var generator = planetFactory.powerSystem.genPool[i];
-                if (generator.id != i)
+            if (planetUsage)
+                for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
                 {
-                    continue;
-                }
-
-                var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
-                if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
-                {
-                    continue;
-                }
-
-                if (isFuelConsumer)
-                {
-                    // account for fuel consumption by power generator
-                    var productId = generator.fuelId;
-                    AddPlanetaryProduction(productId, planetFactory.planet, generator.entityId, true);
-                }
-                else
-                {
-                    var productId = generator.productId;
-                    AddPlanetaryProduction(productId, planetFactory.planet, generator.entityId);
-                    if (generator.catalystId > 0)
+                    var generator = planetFactory.powerSystem.genPool[i];
+                    if (generator.id != i)
                     {
-                        AddPlanetaryProduction(generator.catalystId, planetFactory.planet, generator.entityId, true);
+                        continue;
+                    }
+
+                    var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
+                    if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
+                    {
+                        continue;
+                    }
+
+                    if (isFuelConsumer)
+                    {
+                        // account for fuel consumption by power generator
+                        var productId = generator.fuelId;
+                        AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId, true);
+                    }
+                    else
+                    {
+                        var productId = generator.productId;
+                        AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
+                        if (generator.catalystId > 0)
+                        {
+                            AddPlanetaryUsage(generator.catalystId, planetFactory.planet, generator.entityId, true);
+                        }
                     }
                 }
-            }
         }
 
-        private void AddPlanetaryProduction(int productId, PlanetData planet, int entityId, bool consumption = false)
+        private void AddPlanetaryUsage(int productId, PlanetData planet, int entityId, bool consumption = false)
         {
             var productionKey = ProductionKey.From(productId, planet.id, entityId);
             var keys = consumption ? _countedConsumers : _countedProducers;

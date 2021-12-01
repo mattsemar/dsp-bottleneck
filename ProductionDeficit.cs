@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Bottleneck.Util;
 using UnityEngine;
 
 namespace Bottleneck
@@ -217,7 +218,7 @@ namespace Bottleneck
             return result.ToString();
         }
 
-        private static HashSet<int> _loggedLowPowerByPlanetId = new HashSet<int>();
+        private static HashSet<int> _loggedLowPowerByPlanetId = new();
 
         public static void RecordDeficit(int itemId, AssemblerComponent assembler, PlanetFactory planetFactory)
         {
@@ -231,7 +232,7 @@ namespace Bottleneck
                 item.lackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
                 {
-                    Debug.Log($"planet is low on power {planetFactory.planet.displayName}");
+                    Log.Debug($"planet is low on power {planetFactory.planet.displayName}");
                     _loggedLowPowerByPlanetId.Add(planetFactory.planet.id);
                 }
             }
@@ -257,10 +258,24 @@ namespace Bottleneck
             }
         }
 
-        public static void RecordDeficit(int itemId, LabComponent assembler)
+        public static void RecordDeficit(int itemId, LabComponent assembler, PlanetFactory planetFactory)
         {
             var item = ProductionDeficitItem.FromItem(itemId, assembler);
             item.assemblerCount++;
+            PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[assembler.pcId];
+            int networkId = consumerComponent.networkId;
+            PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
+            float ratio = powerNetwork == null || networkId <= 0 ? 0.0f : (float)powerNetwork.consumerRatio;
+            if (ratio < 0.99f)
+            {
+                item.lackingPowerCount++;
+                if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
+                {
+                    Log.Debug($"planet is low on power {planetFactory.planet.displayName}");
+                    _loggedLowPowerByPlanetId.Add(planetFactory.planet.id);
+                }
+            }
+
             for (int k = 0; k < assembler.requires.Length; k++)
             {
                 if (assembler.served[k] < assembler.requireCounts[k])

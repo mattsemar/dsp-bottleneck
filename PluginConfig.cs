@@ -4,12 +4,13 @@ namespace Bottleneck
 {
     public static class PluginConfig
     {
-        public static ConfigEntry<bool> enable;
+        public static ConfigEntry<int> productionPlanetCount;
 
         public static void InitConfig(ConfigFile confFile)
         {
-            enable = confFile.Bind("General", "enablePlugin", true,
-                "Allows runtime disabling of plugin (with config manager)");
+            productionPlanetCount = confFile.Bind("General", "ProductionPlanetCount", 5, new ConfigDescription(
+                "Number of production planets to show. Too many and tip gets very large",
+                new AcceptableValueRange<int>(2, 15)));
         }
     }
 }

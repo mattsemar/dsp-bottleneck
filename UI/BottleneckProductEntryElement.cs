@@ -13,7 +13,7 @@ namespace Bottleneck.UI
 
     public static class Util
     {
-        public static UIButton CopyButton(UIProductEntry uiProductEntry, UIButton button, Vector2 positionDelta, int entryDataItemId, Action<int> action, string productionSummary,
+        public static UIButton CopyButton(UIProductEntry uiProductEntry, UIButton button, Vector2 positionDelta, int entryDataItemId, Action<int> action,
             Sprite btnSprite)
         {
             var rectTransform = button.GetComponent<RectTransform>();
@@ -31,7 +31,7 @@ namespace Bottleneck.UI
             {
                 var productName = GetItemName(entryDataItemId);
                 mainActionButton.tips.tipTitle = $"{productName} made on";
-                mainActionButton.tips.tipText = productionSummary;
+                mainActionButton.tips.tipText = "";
                 mainActionButton.button.onClick.RemoveAllListeners();
                 mainActionButton.button.onClick.AddListener(() => action.Invoke(1));
                 mainActionButton.highlighted = false;
