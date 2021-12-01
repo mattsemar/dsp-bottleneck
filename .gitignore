@@ -1,0 +1,12 @@
+*.dll
+bin
+*.jpg
+.vs
+obj
+.idea
+bin/
+obj/
+*.user
+/tmp_release/README.md
+/tmp/README.md
+/tmp_release/

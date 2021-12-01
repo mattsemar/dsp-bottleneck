@@ -1,0 +1,11 @@
+{
+    "name":  "Bottleneck",
+    "version_number":  "0.0.1",
+    "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
+    "description":  "Adds some info about production bottlenecks to stats view",
+    "dependencies":  [
+                         "xiaoye97-BepInEx-5.4.5",
+                         "CommonAPI-CommonAPI-1.2.0",
+                         "brokenmass-BetterStats-1.3.2"
+                     ]
+}
