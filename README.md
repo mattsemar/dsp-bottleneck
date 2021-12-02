@@ -11,13 +11,19 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
 
 ## Notes
-This mod was originally planned as an enhancement to the BetterStats (by brokenmass) mod which is why it borrows code from and depends on it. The plan is to remove that requirement at some point in the future.
+This mod was originally planned as an enhancement to BetterStats by brokenmass which is why it borrows code from and depends on it. The plan is to remove that requirement at some point in the future.
 
 ## Installation
 
-For now installation is only supported through a mod manager
+For now installation is only supported through a mod manager, but, in general these mods must be installed first
+* CommonAPI-CommonAPI
+* xiaoye97-LDBTool
 
 ## Changelog
+
+### v0.0.4
+Bugfix: fixed issue where multiple clear filter buttons would be added to stats window.  
+Bugfix: updated logic for determining whether assemblers/labs are currently stacking to match game better  
 
 ### v0.0.3
 Bugfix: fixed exception in stats view when no tech is currently being researched. (Thanks Valoneu for report)

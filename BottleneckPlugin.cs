@@ -349,6 +349,8 @@ namespace Bottleneck
 
         private void AddEnablePrecursorFilterButton(UIStatisticsWindow uiStatisticsWindow)
         {
+            if (_enablePrecursorGO != null)
+                return;
             _filterSprite = Sprite.Create(filterTexture, new Rect(0, 0, filterTexture.width * 0.75f, filterTexture.height * 0.75f), new Vector2(0.5f, 0.5f));
             _enablePrecursorGO = new GameObject("enablePrecursor");
             RectTransform rect = _enablePrecursorGO.AddComponent<RectTransform>();

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Bottleneck.Util;
-using UnityEngine;
 
 namespace Bottleneck
 {
@@ -16,11 +15,11 @@ namespace Bottleneck
         private readonly int[] needed = new int[10];
         private readonly int[] assemblersNeedingCount = new int[10];
         private readonly string[] inputItemNames = new string[10];
-        private readonly Dictionary<int, int> inputItemIndex = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> inputItemIndex = new();
         private int neededCount;
-        public int jammedCount = 0;
+        public int jammedCount;
 
-        private static Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new Dictionary<int, Dictionary<int, ProductionDeficitItem>>();
+        private static Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
 
         public void AddNeeded(int itemId, int count)
         {
@@ -140,7 +139,7 @@ namespace Bottleneck
             return value;
         }
 
-        public void Clear()
+        private void Clear()
         {
             Array.Clear(needed, 0, needed.Length);
             Array.Clear(assemblersNeedingCount, 0, assemblersNeedingCount.Length);
@@ -218,7 +217,7 @@ namespace Bottleneck
             return result.ToString();
         }
 
-        private static HashSet<int> _loggedLowPowerByPlanetId = new();
+        private static readonly HashSet<int> _loggedLowPowerByPlanetId = new();
 
         public static void RecordDeficit(int itemId, AssemblerComponent assembler, PlanetFactory planetFactory)
         {
@@ -248,7 +247,7 @@ namespace Bottleneck
 
             for (int i = 0; i < assembler.products.Length; i++)
             {
-                if (assembler.produced[i] <= assembler.productCounts[i] * 9)
+                if (!assembler.outputing)
                 {
                     continue;
                 }
@@ -286,7 +285,7 @@ namespace Bottleneck
 
             for (int i = 0; i < assembler.products.Length; i++)
             {
-                if (assembler.produced[i] > assembler.productCounts[i] * 9)
+                if (assembler.outputing)
                 {
                     item.jammedCount++;
                     break;

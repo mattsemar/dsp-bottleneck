@@ -1,8 +1,8 @@
 {
     "name":  "Bottleneck",
-    "version_number":  "0.0.3",
+    "version_number":  "0.0.4",
     "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
-    "description":  "Adds some info about production bottlenecks to stats view",
+    "description":  "Adds some info about production bottlenecks and production/consumption locations to Statistics panel",
     "dependencies":  [
                          "xiaoye97-BepInEx-5.4.5",
                          "CommonAPI-CommonAPI-1.2.0",
