@@ -5,8 +5,8 @@ namespace Bottleneck.Util
 {
     public static class ItemUtil
     {
-        private static Dictionary<int, List<int>> _itemPrecursorCache = new Dictionary<int, List<int>>();
-        private static Dictionary<int, List<int>> _itemSuccessorCache = new Dictionary<int, List<int>>();
+        private static Dictionary<int, List<int>> _itemPrecursorCache = new();
+        private static Dictionary<int, List<int>> _itemSuccessorCache = new();
 
         public static List<int> DirectPrecursorItems(int itemId)
         {

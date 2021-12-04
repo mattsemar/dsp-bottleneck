@@ -22,5 +22,11 @@ namespace Bottleneck.Util
         {
             logger.LogWarning($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
         }
+        
+        public static void LogAndPopupMessage(string message)
+        {
+            UIRealtimeTip.Popup(message);
+            logger.LogInfo($"POPUP: '{message}'");
+        }
     }
 }
