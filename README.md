@@ -11,7 +11,8 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
 
 ## Notes
-This mod was originally planned as an enhancement to BetterStats by brokenmass which is why it borrows code from and depends on it. The plan is to remove that requirement at some point in the future.
+This mod was originally planned as an enhancement to BetterStats by brokenmass which is why it borrows code from and depends on it.
+The plan is to remove that requirement at some point in the future.
 
 ## Installation
 
@@ -20,6 +21,11 @@ For now installation is only supported through a mod manager, but, in general th
 * xiaoye97-LDBTool
 
 ## Changelog
+
+### v0.1.0
+Feature: added support for filtering only precursors that are needed (hold control when clicking the precursor filter)
+Feature: added popup warning when a planet with too little power are detected (one popup per planet per game), use config property to disable
+Increased ProductionPlanetCount config property max to 35. 
 
 ### v0.0.4
 Bugfix: fixed issue where multiple clear filter buttons would be added to stats window.  

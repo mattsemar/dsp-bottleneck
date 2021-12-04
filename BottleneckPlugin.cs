@@ -27,6 +27,7 @@ namespace Bottleneck
 
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
         private int _targetItemId = -1;
+        private bool _deficientOnlyMode;
         private GameObject _textGo;
         private Button _btn;
         private Sprite _filterSprite;
@@ -232,7 +233,8 @@ namespace Bottleneck
                 {
                     if (_enableMadeOn)
                     {
-                        elt.precursorButton.tips.tipText = "<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
+                        var parensMessage = ItemUtil.HasPrecursors(productId) ? "(Control click see only precursors that are lacking)\r\n" : "";
+                        elt.precursorButton.tips.tipText = $"{parensMessage}<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
                         if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         {
                             elt.precursorButton.tips.tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
@@ -310,6 +312,7 @@ namespace Bottleneck
             _itemFilter.Clear();
             _itemFilter.Add(itemId);
             _targetItemId = itemId;
+            _deficientOnlyMode = VFInput.control;
 
             if (!successor)
             {
@@ -329,17 +332,21 @@ namespace Bottleneck
             }
         }
 
-        private void FilterEntries(UIProductEntryList uiProductEntryListInstance)
+        private void FilterEntries(UIProductEntryList uiProductEntryList)
         {
-            if (_itemFilter.Count == 0) return;
-            bool precursorFilterActive = _itemFilter.Count > 0;
-            var uiProductEntryList = uiProductEntryListInstance;
+            if (_itemFilter.Count == 0 ) return;
             for (int pIndex = uiProductEntryList.entryDatasCursor - 1; pIndex >= 0; --pIndex)
             {
                 UIProductEntryData entryData = uiProductEntryList.entryDatas[pIndex];
-                bool precursorFilterResult = !precursorFilterActive || !_itemFilter.Contains(entryData.itemId);
+                
+                var hideItem = !_itemFilter.Contains(entryData.itemId);
+                if (_deficientOnlyMode && entryData.itemId != _targetItemId)
+                {
+                    hideItem = !ProductionDeficit.IsDeficitItemFor(entryData.itemId, _targetItemId);
+                }
 
-                if (precursorFilterResult)
+                // hide the filtered item by moving it to the cursor location and decrementing cursor by one
+                if (hideItem)
                 {
                     uiProductEntryList.Swap(pIndex, uiProductEntryList.entryDatasCursor - 1);
                     --uiProductEntryList.entryDatasCursor;

@@ -15,6 +15,7 @@ namespace Bottleneck
         private readonly int[] needed = new int[10];
         private readonly int[] assemblersNeedingCount = new int[10];
         private readonly string[] inputItemNames = new string[10];
+        private readonly int[] inputItemId = new int[10];
         private readonly Dictionary<int, int> inputItemIndex = new();
         private int neededCount;
         public int jammedCount;
@@ -69,6 +70,26 @@ namespace Bottleneck
             return new[] { $"{neededStr}".Trim(), $"{stackingStr}".Trim(), unpoweredstr };
         }
 
+        public HashSet<int> NeededItems()
+        {
+            var result = new HashSet<int>();
+
+            for (int i = 0; i < neededCount; i++)
+            {
+                if (needed[i] > 0)
+                {
+                    // neededMax = needed[i];
+                    var assemblerNeedingCount = assemblersNeedingCount[i];
+                    var percent = (double)assemblerNeedingCount / assemblerCount;
+                    if (percent > 0.05)
+                    {
+                        result.Add(inputItemId[i]);
+                    }
+                }
+            }
+            return result;
+        }
+
         public static List<ProductionDeficitItem> ForItemId(int itemId)
         {
             if (!_byItemByRecipeId.ContainsKey(itemId))
@@ -100,6 +121,7 @@ namespace Bottleneck
                 {
                     var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
                     value.inputItemNames[i] = requiredItem.Name.Translate();
+                    value.inputItemId[i] = requiredItem.ID;
                     value.inputItemIndex[assemblerComponent.requires[i]] = i;
                 }
 
@@ -130,6 +152,7 @@ namespace Bottleneck
                 {
                     var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
                     value.inputItemNames[i] = requiredItem.Name.Translate();
+                    value.inputItemId[i] = requiredItem.ID;
                     value.inputItemIndex[assemblerComponent.requires[i]] = i;
                 }
 
@@ -231,7 +254,15 @@ namespace Bottleneck
                 item.lackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
                 {
-                    Log.Debug($"planet is low on power {planetFactory.planet.displayName}");
+                    if (PluginConfig.popupLowPowerWarnings.Value)
+                    {
+                        Log.LogAndPopupMessage($"Planet '{planetFactory.planet.displayName}' low on power");
+                    }
+                    else
+                    {
+                        Log.Warn($"Planet is low on power {planetFactory.planet.displayName}");
+                    }
+
                     _loggedLowPowerByPlanetId.Add(planetFactory.planet.id);
                 }
             }
@@ -270,7 +301,15 @@ namespace Bottleneck
                 item.lackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
                 {
-                    Log.Debug($"planet is low on power {planetFactory.planet.displayName}");
+                    if (PluginConfig.popupLowPowerWarnings.Value)
+                    {
+                        Log.LogAndPopupMessage($"Planet '{planetFactory.planet.displayName}' low on power");
+                    }
+                    else
+                    {
+                        Log.Warn($"Planet is low on power {planetFactory.planet.displayName}");
+                    }
+
                     _loggedLowPowerByPlanetId.Add(planetFactory.planet.id);
                 }
             }
@@ -291,6 +330,22 @@ namespace Bottleneck
                     break;
                 }
             }
+        }
+
+        public static bool IsDeficitItemFor(int precursorItem, int targetItem)
+        {
+            var productionDeficitItems = ProductionDeficitItem.ForItemId(targetItem);
+            // this is a list because there can be a most needed item for each recipe for a target production item
+            foreach (var productionDeficitItem in productionDeficitItems)
+            {
+                var neededItems = productionDeficitItem.NeededItems();
+                if (neededItems.Contains(precursorItem))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
