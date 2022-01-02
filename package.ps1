@@ -42,11 +42,11 @@ $new_version_string = "$([string]::Join(".", $new_version))";
 $sourceFileContent -replace $old_vernum, $new_version_string  | Set-Content -Path .\Bottleneck.csproj -NoNewline
 
 Import-Module -Name ".\Invoke-MsBuild.psm1"
-Invoke-MsBuild -Path ".\Bottleneck.csproj"
+Invoke-MsBuild -Path ".\Bottleneck.csproj" -Params "/target:Clean;Build /property:Configuration=Release"
 
 #dotnet build
 
-Copy-Item -Path bin/Debug/netstandard2.0/Bottleneck.dll -Destination tmp_release
+Copy-Item -Path bin/release/netstandard2.0/Bottleneck.dll -Destination tmp_release
 Copy-Item README.md -Destination tmp_release\README.md
 Copy-Item icon.png -Destination tmp_release
 

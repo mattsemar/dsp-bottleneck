@@ -10,7 +10,9 @@ namespace Bottleneck.Util
 
         public static void Debug(string message)
         {
+#if DEBUG
             logger.LogDebug($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
+#endif
         }
 
         public static void Info(string message)
@@ -22,7 +24,7 @@ namespace Bottleneck.Util
         {
             logger.LogWarning($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
         }
-        
+
         public static void LogAndPopupMessage(string message)
         {
             UIRealtimeTip.Popup(message);

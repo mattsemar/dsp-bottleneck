@@ -81,8 +81,8 @@ namespace Bottleneck
     {
         private readonly List<PlanetaryProduction> _productions = new();
         private readonly List<PlanetaryConsumption> _consumers = new();
-        private readonly HashSet<string> _productionPlanets = new();
-        private readonly HashSet<string> _consumptionPlanets = new();
+        private readonly Dictionary<string, PlanetaryConsumption> _consumptionPlanetToConsumer = new(); 
+        private readonly Dictionary<string, PlanetaryProduction> _productionPlanetToProducer = new(); 
         private bool _prodSummaryTextDirty = true;
         private string _prodSummary = "";
 
@@ -91,19 +91,20 @@ namespace Bottleneck
 
         public void AddProduction(string planet, int producerCount)
         {
-            if (_productionPlanets.Contains(planet))
+            if (_productionPlanetToProducer.ContainsKey(planet))
             {
-                var planetaryProduction = _productions.Find(existingPlanet => existingPlanet.PlanetName == planet);
+                var planetaryProduction = _productionPlanetToProducer[planet];
                 planetaryProduction.Producers += producerCount;
             }
             else
             {
-                _productionPlanets.Add(planet);
-                _productions.Add(new PlanetaryProduction
+                var planetaryProduction = new PlanetaryProduction
                 {
                     Producers = producerCount,
                     PlanetName = planet
-                });
+                };
+                _productionPlanetToProducer.Add(planet, planetaryProduction); 
+                _productions.Add(planetaryProduction);
             }
 
             _productions.Sort();
@@ -112,19 +113,20 @@ namespace Bottleneck
 
         public void AddConsumption(string planet, int consumerCount)
         {
-            if (_consumptionPlanets.Contains(planet))
+            if (_consumptionPlanetToConsumer.ContainsKey(planet))
             {
-                var planetaryConsumption = _consumers.Find(existingPlanet => existingPlanet.PlanetName == planet);
+                var planetaryConsumption = _consumptionPlanetToConsumer[planet];
                 planetaryConsumption.Consumers += consumerCount;
             }
             else
             {
-                _consumptionPlanets.Add(planet);
-                _consumers.Add(new PlanetaryConsumption
+                var planetaryConsumption = new PlanetaryConsumption
                 {
                     Consumers = consumerCount,
                     PlanetName = planet
-                });
+                };
+                _consumptionPlanetToConsumer[planet] = planetaryConsumption;
+                _consumers.Add(planetaryConsumption);
             }
 
             _consumers.Sort();
@@ -161,12 +163,12 @@ namespace Bottleneck
 
         public int PlanetCount()
         {
-            return _productionPlanets.Count;
+            return _productionPlanetToProducer.Count;
         }
 
         public int ConsumerPlanetCount()
         {
-            return _consumptionPlanets.Count;
+            return _consumptionPlanetToConsumer.Count;
         }
     }
 }
