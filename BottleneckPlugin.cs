@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using BepInEx;
 using Bottleneck.UI;
 using Bottleneck.Util;
@@ -24,7 +25,6 @@ namespace Bottleneck
         private readonly HashSet<ProductionKey> _countedConsumers = new();
         private List<GameObject> objsToDestroy = new();
 
-
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
         private int _targetItemId = -1;
         private bool _deficientOnlyMode;
@@ -32,6 +32,11 @@ namespace Bottleneck
         private Button _btn;
         private Sprite _filterSprite;
         private bool _enableMadeOn;
+        private bool _madeOnComputedSinceOpen;
+        private bool _deficitComputedSinceOpen;
+        private BottleneckTask _pendingMadeOnTask;
+        private BottleneckTask _pendingDeficitTask;
+        private Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
 
         private void Awake()
         {
@@ -41,6 +46,96 @@ namespace Bottleneck
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+        }
+
+        private void Update()
+        {
+            if (_pendingMadeOnTask != null)
+            {
+                var task = _pendingMadeOnTask;
+                _pendingMadeOnTask = null;
+                if (!_madeOnComputedSinceOpen)
+                {
+                    Log.Debug($"Processing madeOn task, age: {DateTime.Now - task.createdAt}");
+                    ProcessMadeOnTask(task);
+                    _madeOnComputedSinceOpen = true;
+                }
+                else
+                {
+                    Log.Debug("Skipping madeOn task since window has not been opened since last attempt");
+                }
+            }
+
+            if (_pendingDeficitTask != null)
+            {
+                var task = _pendingDeficitTask;
+                _pendingDeficitTask = null;
+                Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
+                ProcessDeficitTask(task);
+                _deficitComputedSinceOpen = true;
+            }
+        }
+
+        private void ProcessMadeOnTask(BottleneckTask task)
+        {
+            var uiStatsWindow = task.statsWindow;
+            if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
+            {
+                Log.Debug($"skipping madeon task due to window not being active");
+                return;
+            }
+
+            _productionLocations.Clear();
+            _countedConsumers.Clear();
+            _countedProducers.Clear();
+            for (int i = 0; i < uiStatsWindow.gameData.factoryCount; i++)
+            {
+                AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], true);
+            }
+
+            _enableMadeOn = true;
+        }
+
+        private void ProcessDeficitTask(BottleneckTask task)
+        {
+            var uiStatsWindow = task.statsWindow;
+            if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
+            {
+                Log.Debug($"skipping deficit task due to window not being active");
+                return;
+            }
+
+            ProductionDeficit.Clear();
+
+            if (uiStatsWindow.astroFilter == -1)
+            {
+                int factoryCount = uiStatsWindow.gameData.factoryCount;
+                for (int i = 0; i < factoryCount; i++)
+                {
+                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], false);
+                }
+            }
+            else if (uiStatsWindow.astroFilter == 0)
+            {
+                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+            }
+            else if (uiStatsWindow.astroFilter % 100 > 0)
+            {
+                PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
+                AddPlanetFactoryData(planetData.factory, false);
+            }
+            else if (uiStatsWindow.astroFilter % 100 == 0)
+            {
+                int starId = uiStatsWindow.astroFilter / 100;
+                StarData starData = uiStatsWindow.gameData.galaxy.StarById(starId);
+                for (int j = 0; j < starData.planetCount; j++)
+                {
+                    if (starData.planets[j].factory != null)
+                    {
+                        AddPlanetFactoryData(starData.planets[j].factory, false);
+                    }
+                }
+            }
         }
 
         internal void OnDestroy()
@@ -97,7 +192,11 @@ namespace Bottleneck
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
             if (_instance != null && _instance != null && _instance.gameObject != null)
+            {
                 _instance.AddEnablePrecursorFilterButton(__instance);
+                _instance._madeOnComputedSinceOpen = false;
+                _instance._deficitComputedSinceOpen = false;
+            }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntryList), "FilterEntries")]
@@ -151,65 +250,32 @@ namespace Bottleneck
 
         private void RecordEntryData(UIStatisticsWindow uiStatsWindow)
         {
-            bool planetUsageMode = Time.frameCount % 53 == 0;
-            bool deficitMode = Time.frameCount % 23 == 0;
-            if (!planetUsageMode && !deficitMode)
+            bool planetUsageMode = Time.frameCount % 500 == 0;
+            bool deficitMode = Time.frameCount % 102 == 0;
+            if ((!planetUsageMode && !deficitMode) && (_deficitComputedSinceOpen && _madeOnComputedSinceOpen))
             {
                 // no need to run every frame
                 return;
             }
 
-            if (planetUsageMode)
+            if (planetUsageMode || !_enableMadeOn)
             {
-                _productionLocations.Clear();
-                _countedConsumers.Clear();
-                _countedProducers.Clear();
-                for (int i = 0; i < uiStatsWindow.gameData.factoryCount; i++)
+                _pendingMadeOnTask = new BottleneckTask
                 {
-                    AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], true);
-                }
-
-                _enableMadeOn = true;
+                    statsWindow = uiStatsWindow,
+                    taskType = TaskType.MadeOn,
+                };
             }
 
-            if (deficitMode)
+            if (deficitMode && _pendingDeficitTask == null)
             {
-                ProductionDeficit.Clear();
-
-                if (uiStatsWindow.astroFilter == -1)
+                _pendingDeficitTask = new BottleneckTask
                 {
-                    int factoryCount = uiStatsWindow.gameData.factoryCount;
-                    for (int i = 0; i < factoryCount; i++)
-                    {
-                        AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], false);
-                    }
-
-                    _enableMadeOn = true;
-                }
-                else if (uiStatsWindow.astroFilter == 0)
-                {
-                    AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
-                }
-                else if (uiStatsWindow.astroFilter % 100 > 0)
-                {
-                    PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
-                    AddPlanetFactoryData(planetData.factory, false);
-                }
-                else if (uiStatsWindow.astroFilter % 100 == 0)
-                {
-                    int starId = uiStatsWindow.astroFilter / 100;
-                    StarData starData = uiStatsWindow.gameData.galaxy.StarById(starId);
-                    for (int j = 0; j < starData.planetCount; j++)
-                    {
-                        if (starData.planets[j].factory != null)
-                        {
-                            AddPlanetFactoryData(starData.planets[j].factory, false);
-                        }
-                    }
-                }
+                    statsWindow = uiStatsWindow,
+                    taskType = TaskType.Deficit
+                };
             }
         }
-
 
         private void OnUpdate(UIProductEntry productEntry)
         {
@@ -220,7 +286,7 @@ namespace Bottleneck
                 elt = EnhanceElement(productEntry);
             }
 
-            if (elt.precursorButton != null)
+            if (elt.precursorButton != null && ButtonOutOfDate(elt.precursorButton, productEntry.entryData.itemId))
             {
                 var productId = productEntry.entryData.itemId;
                 elt.precursorButton.tips.tipTitle = "Production Details";
@@ -255,9 +321,11 @@ namespace Bottleneck
                 {
                     elt.precursorButton.tips.tipText = "";
                 }
+
+                UpdateButtonUpdateDate(elt.precursorButton, productId);
             }
 
-            if (elt.successorButton != null)
+            if (elt.successorButton != null && ButtonOutOfDate(elt.successorButton, productEntry.entryData.itemId))
             {
                 var productId = productEntry.entryData.itemId;
                 elt.successorButton.tips.tipTitle = "Consumption Details";
@@ -278,7 +346,33 @@ namespace Bottleneck
                 {
                     elt.successorButton.tips.tipText = "";
                 }
+
+                UpdateButtonUpdateDate(elt.successorButton, productId);
             }
+        }
+
+        private void UpdateButtonUpdateDate(UIButton uiButton, int productId)
+        {
+            _buttonTipAge[uiButton] = new FilterButtonItemAge(uiButton, productId)
+            {
+                lastUpdated = DateTime.Now
+            };
+        }
+
+        private bool ButtonOutOfDate(UIButton uiButton, int entryDataItemId)
+        {
+            if (_buttonTipAge.TryGetValue(uiButton, out FilterButtonItemAge itemAge))
+            {
+                if (itemAge.itemId != entryDataItemId)
+                    return true;
+                return (DateTime.Now - itemAge.lastUpdated).TotalSeconds > 10;
+            }
+
+            _buttonTipAge[uiButton] = new FilterButtonItemAge(uiButton, entryDataItemId)
+            {
+                lastUpdated = DateTime.Now
+            };
+            return true;
         }
 
         private void ClearFilter()
@@ -287,14 +381,14 @@ namespace Bottleneck
             _targetItemId = -1;
         }
 
-        private BottleneckProductEntryElement EnhanceElement(UIProductEntry __instance)
+        private BottleneckProductEntryElement EnhanceElement(UIProductEntry productEntry)
         {
-            var precursorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn1, new Vector2(120 + 47, 80), __instance.entryData.itemId,
-                _ => { UpdatePrecursorFilter(__instance.entryData.itemId); }, _filterSprite);
+            var precursorButton = UI.Util.CopyButton(productEntry, productEntry.favoriteBtn1, new Vector2(120 + 47, 80), productEntry.entryData.itemId,
+                _ => { UpdatePrecursorFilter(productEntry.entryData.itemId); }, _filterSprite);
 
             objsToDestroy.Add(precursorButton.gameObject);
-            var successorButton = UI.Util.CopyButton(__instance, __instance.favoriteBtn1, new Vector2(120 + 47, 0), __instance.entryData.itemId,
-                _ => { UpdatePrecursorFilter(__instance.entryData.itemId, true); }, _filterSprite);
+            var successorButton = UI.Util.CopyButton(productEntry, productEntry.favoriteBtn1, new Vector2(120 + 47, 0), productEntry.entryData.itemId,
+                _ => { UpdatePrecursorFilter(productEntry.entryData.itemId, true); }, _filterSprite);
             objsToDestroy.Add(successorButton.gameObject);
             var result = new BottleneckProductEntryElement
             {
@@ -302,7 +396,7 @@ namespace Bottleneck
                 successorButton = successorButton
             };
 
-            _uiElements.Add(__instance, result);
+            _uiElements.Add(productEntry, result);
 
             return result;
         }
@@ -334,11 +428,11 @@ namespace Bottleneck
 
         private void FilterEntries(UIProductEntryList uiProductEntryList)
         {
-            if (_itemFilter.Count == 0 ) return;
+            if (_itemFilter.Count == 0) return;
             for (int pIndex = uiProductEntryList.entryDatasCursor - 1; pIndex >= 0; --pIndex)
             {
                 UIProductEntryData entryData = uiProductEntryList.entryDatas[pIndex];
-                
+
                 var hideItem = !_itemFilter.Contains(entryData.itemId);
                 if (_deficientOnlyMode && entryData.itemId != _targetItemId)
                 {

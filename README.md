@@ -14,6 +14,9 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 This mod was originally planned as an enhancement to BetterStats by brokenmass which is why it borrows code from and depends on it.
 The plan is to remove that requirement at some point in the future.
 
+Planetary consumption/production is only calculated one time after the statistics window is opened. If you add machines to your factory while the stats window is
+open (maybe you're running at a very high resolution?) then you'll have to close and re-open the window to see those values update to reflect the change
+
 ## Installation
 
 For now installation is only supported through a mod manager, but, in general these mods must be installed first
@@ -21,6 +24,9 @@ For now installation is only supported through a mod manager, but, in general th
 * xiaoye97-LDBTool
 
 ## Changelog
+
+### v0.1.1
+Bugfix: reduced the frequency of computation for planetary production/consumption to address some reported UI lag (thanks to thedoc31 for report) 
 
 ### v0.1.0
 Feature: added support for filtering only precursors that are needed (hold control when clicking the precursor filter)
@@ -41,6 +47,6 @@ Stopgap bugfix, ended up being useless
 Initial version
 
 ## Contact
-Bugs? Contact me on discord: mattersnot#1983 or create an issue in the github repository.
+Bugs? Contact me on discord: Semar#1983 or create an issue in the github repository.
 
 <div>Icons made by <a href="https://www.flaticon.com/authors/ddara" title="dDara">dDara</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>

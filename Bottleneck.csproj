@@ -4,9 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Bottleneck</AssemblyName>
     <Description>Production bottleneck finder</Description>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>9.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
