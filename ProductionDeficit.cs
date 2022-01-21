@@ -112,19 +112,22 @@ namespace Bottleneck
             byRecipe.TryGetValue(recipeId, out ProductionDeficitItem value);
             if (value == null)
             {
+                var requiresLength = assemblerComponent.requires?.Length;
+                var requires = requiresLength ?? 0;
                 value = new ProductionDeficitItem
                 {
-                    neededCount = assemblerComponent.requires.Length,
-                    recipeName = LDB.recipes.Select(recipeId).Name.Translate()
+                    neededCount = requires,
+                    recipeName = ItemUtil.GetRecipeName(recipeId),
                 };
-                for (int i = 0; i < value.neededCount; i++)
-                {
-                    var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                    value.inputItemNames[i] = requiredItem.Name.Translate();
-                    value.inputItemId[i] = requiredItem.ID;
-                    value.inputItemIndex[assemblerComponent.requires[i]] = i;
-                }
-
+                if (assemblerComponent.requires != null && assemblerComponent.requires.Length > 0)
+                    for (int i = 0; i < value.neededCount; i++)
+                    {
+                        var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
+                        value.inputItemNames[i] = requiredItem.Name.Translate();
+                        value.inputItemId[i] = requiredItem.ID;
+                        value.inputItemIndex[assemblerComponent.requires[i]] = i;
+                    }
+                
                 byRecipe[recipeId] = value;
             }
 

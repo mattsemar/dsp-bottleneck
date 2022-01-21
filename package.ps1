@@ -30,6 +30,10 @@ elseif ($vertype -eq "major")
 {
     $new_version = [version]::New($v.Major + 1, 0, 0)
 }
+elseif ($vertype -eq "none")
+{
+    $new_version = [version]::New($v.Major, $v.Minor, $v.Build)
+}
 else
 {
     Write-Host "invalid vertype: should be (major, minor, patch), got $vertype"

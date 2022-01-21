@@ -25,6 +25,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v0.1.2
+Bugfix: Fixed issue where stats for modded items would not show up properly 
+
 ### v0.1.1
 Bugfix: reduced the frequency of computation for planetary production/consumption to address some reported UI lag (thanks to thedoc31 for report) 
 

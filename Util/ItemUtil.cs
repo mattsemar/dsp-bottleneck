@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Bottleneck.Util
@@ -70,6 +71,24 @@ namespace Bottleneck.Util
         public static bool HasConsumers(int productId)
         {
             return DirectSuccessorItems(productId).Count > 0;
+        }
+
+        private static ConcurrentDictionary<int, string> _recipeNames = new();
+        public static string GetRecipeName(int recipeId)
+        {
+            if (_recipeNames.TryGetValue(recipeId, out string nm))
+            {
+                return nm;
+            }
+            var recipeProto = LDB.recipes.Select(recipeId);
+            if (recipeProto == null || recipeProto.Name == null)
+            {
+                // don't add
+                return $"UNKNOWN_RECIPE_${recipeId}";
+            }
+            
+            _recipeNames[recipeId] = recipeProto.Name.Translate();
+            return _recipeNames[recipeId];
         }
     }
 }
