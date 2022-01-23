@@ -45,7 +45,7 @@ namespace Bottleneck
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
-            Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
         }
 
         private void Update()

@@ -25,6 +25,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v0.1.3
+Bugfix: Changed low power check to be less sensitive. Should give fewer false positives 
+
 ### v0.1.2
 Bugfix: Fixed issue where stats for modded items would not show up properly 
 

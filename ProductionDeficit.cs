@@ -251,8 +251,9 @@ namespace Bottleneck
             PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[assembler.pcId];
             int networkId = consumerComponent.networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
-            float ratio = powerNetwork == null || networkId <= 0 ? 0.0f : (float)powerNetwork.consumerRatio;
-            if (ratio < 0.99f)
+            
+            float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
+            if (ratio < 0.98f)
             {
                 item.lackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
@@ -260,6 +261,10 @@ namespace Bottleneck
                     if (PluginConfig.popupLowPowerWarnings.Value)
                     {
                         Log.LogAndPopupMessage($"Planet '{planetFactory.planet.displayName}' low on power");
+                        var assemblerPos = planetFactory.entityPool[assembler.entityId].pos;
+                        Maths.GetLatitudeLongitude(assemblerPos, out int latd, out int latf, out int logd, out int logf, out bool north, out bool south, out bool west,
+                            out bool east);
+                        Log.Warn($"{latd}.{latf} {north}, {logd}.{logf} {west}");
                     }
                     else
                     {
@@ -298,8 +303,8 @@ namespace Bottleneck
             PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[assembler.pcId];
             int networkId = consumerComponent.networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
-            float ratio = powerNetwork == null || networkId <= 0 ? 0.0f : (float)powerNetwork.consumerRatio;
-            if (ratio < 0.99f)
+            float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
+            if (ratio < 0.98f)
             {
                 item.lackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
