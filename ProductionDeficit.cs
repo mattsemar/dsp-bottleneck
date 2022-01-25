@@ -286,21 +286,19 @@ namespace Bottleneck
 
             for (int i = 0; i < assembler.products.Length; i++)
             {
-                if (!assembler.outputing)
+                if (assembler.produced[i] >= assembler.productCounts[i] * 8)
                 {
-                    continue;
+                    item.jammedCount++;
+                    break;                    
                 }
-
-                item.jammedCount++;
-                break;
             }
         }
 
-        public static void RecordDeficit(int itemId, LabComponent assembler, PlanetFactory planetFactory)
+        public static void RecordDeficit(int itemId, LabComponent lab, PlanetFactory planetFactory)
         {
-            var item = ProductionDeficitItem.FromItem(itemId, assembler);
+            var item = ProductionDeficitItem.FromItem(itemId, lab);
             item.assemblerCount++;
-            PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[assembler.pcId];
+            PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[lab.pcId];
             int networkId = consumerComponent.networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
             float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
@@ -322,17 +320,17 @@ namespace Bottleneck
                 }
             }
 
-            for (int k = 0; k < assembler.requires.Length; k++)
+            for (int k = 0; k < lab.requires.Length; k++)
             {
-                if (assembler.served[k] < assembler.requireCounts[k])
+                if (lab.served[k] < lab.requireCounts[k])
                 {
-                    item.AddNeeded(assembler.requires[k], Math.Max(1, assembler.needs[k]));
+                    item.AddNeeded(lab.requires[k], Math.Max(1, lab.needs[k]));
                 }
             }
 
-            for (int i = 0; i < assembler.products.Length; i++)
+            for (int i = 0; i < lab.products.Length; i++)
             {
-                if (assembler.outputing)
+                if (lab.time > lab.timeSpend)
                 {
                     item.jammedCount++;
                     break;

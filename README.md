@@ -25,6 +25,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v0.1.4
+Update: Sync with update in game code that removed the 'outputing' field on assemblers and labs 
+
 ### v0.1.3
 Bugfix: Changed low power check to be less sensitive. Should give fewer false positives 
 
