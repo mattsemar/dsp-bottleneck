@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx;
 using Bottleneck.UI;
 using Bottleneck.Util;
@@ -10,7 +11,6 @@ using UnityEngine.UI;
 namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-    [BepInDependency("com.brokenmass.plugin.DSP.BetterStats")]
     public class BottleneckPlugin : BaseUnityPlugin
     {
         private Harmony _harmony;
@@ -37,6 +37,7 @@ namespace Bottleneck
         private BottleneckTask _pendingMadeOnTask;
         private BottleneckTask _pendingDeficitTask;
         private Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
+        private Stats.Stats _statsObj;
 
         private void Awake()
         {
@@ -45,7 +46,20 @@ namespace Bottleneck
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
+            ConditionallyLoadStats();
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
+        }
+
+        private void ConditionallyLoadStats()
+        {
+            var pluginInfo = BepInEx.Bootstrap.Chainloader.PluginInfos.Values.ToList().Find(pi => pi.Metadata.GUID == "com.brokenmass.plugin.DSP.BetterStats");
+            if (pluginInfo != null)
+            {
+                Log.Debug($"Found external version of BetterStats {pluginInfo.Metadata.Version}");
+                return;
+            }
+            _statsObj = gameObject.AddComponent<Stats.Stats>();
+            Log.Debug($"Added local stats {_statsObj.gameObject.activeSelf}");
         }
 
         private void Update()
@@ -166,6 +180,10 @@ namespace Bottleneck
 
             Clear();
             _harmony.UnpatchSelf();
+            if (_statsObj != null)
+            {
+                Destroy(_statsObj);
+            }
         }
 
         private void Clear()
@@ -191,6 +209,8 @@ namespace Bottleneck
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen")]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
+            if (_instance != null && _instance._statsObj != null)
+                Stats.Stats.UIStatisticsWindow__OnOpen_Postfix(__instance);
             if (_instance != null && _instance != null && _instance.gameObject != null)
             {
                 _instance.AddEnablePrecursorFilterButton(__instance);
@@ -202,6 +222,8 @@ namespace Bottleneck
         [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntryList), "FilterEntries")]
         public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance)
         {
+            if (_instance != null && _instance._statsObj != null)
+                Stats.Stats.UIProductEntryList_FilterEntries_Postfix(__instance);
             if (_instance != null)
             {
                 _instance.FilterEntries(__instance);
@@ -214,11 +236,15 @@ namespace Bottleneck
         {
             if (_instance == null)
                 return;
+            if (_instance._statsObj != null)
+                Stats.Stats.UIStatisticsWindow__OnUpdate_Prefix(__instance);
             _instance.UpdateButtonState();
         }
 
         private void UpdateButtonState()
         {
+            if (_btn == null || _btn.gameObject == null || _textGo == null)
+                return;
             if (_targetItemId == -1)
             {
                 _btn.gameObject.SetActive(false);
@@ -236,6 +262,8 @@ namespace Bottleneck
         {
             if (_instance != null)
             {
+                if (_instance._statsObj != null)
+                    Stats.Stats.UIProductEntry__OnUpdate_Postfix(__instance);
                 _instance.OnUpdate(__instance);
             }
         }
@@ -245,6 +273,8 @@ namespace Bottleneck
         {
             if (_instance == null || __instance == null)
                 return;
+            if (_instance._statsObj != null)
+                Stats.Stats.UIProductionStatWindow_ComputeDisplayEntries_Prefix(__instance);
             _instance.RecordEntryData(__instance);
         }
 
@@ -365,7 +395,7 @@ namespace Bottleneck
             {
                 if (itemAge.itemId != entryDataItemId)
                     return true;
-                return (DateTime.Now - itemAge.lastUpdated).TotalSeconds > 10;
+                return (DateTime.Now - itemAge.lastUpdated).TotalSeconds > 4;
             }
 
             _buttonTipAge[uiButton] = new FilterButtonItemAge(uiButton, entryDataItemId)
@@ -607,37 +637,39 @@ namespace Bottleneck
                 }
             }
 
-            if (planetUsage)
-                for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
+            for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
+            {
+                var generator = planetFactory.powerSystem.genPool[i];
+                if (generator.id != i)
                 {
-                    var generator = planetFactory.powerSystem.genPool[i];
-                    if (generator.id != i)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
-                    if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
-                    {
-                        continue;
-                    }
+                var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
+                if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
+                {
+                    continue;
+                }
 
-                    if (isFuelConsumer)
+                if (isFuelConsumer)
+                {
+                    // account for fuel consumption by power generator
+                    var productId = generator.fuelId;
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId, true);
+                }
+                else
+                {
+                    var productId = generator.productId;
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
+
+                    if (generator.catalystId > 0)
                     {
-                        // account for fuel consumption by power generator
-                        var productId = generator.fuelId;
-                        AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId, true);
-                    }
-                    else
-                    {
-                        var productId = generator.productId;
-                        AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
-                        if (generator.catalystId > 0)
-                        {
-                            AddPlanetaryUsage(generator.catalystId, planetFactory.planet, generator.entityId, true);
-                        }
+                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
+                        else // this should be critical photons 
+                            ProductionDeficit.RecordDeficit(generator.productId, generator, planetFactory);
                     }
                 }
+            }
         }
 
         private void AddPlanetaryUsage(int productId, PlanetData planet, int entityId, bool consumption = false)

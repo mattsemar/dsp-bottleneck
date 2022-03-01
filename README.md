@@ -6,13 +6,28 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 
 ![Example](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/screenshot.png?raw=true)
 
+## BetterStats 
+
+This plugin contains a fork of BetterStats with support for Proliferator. To use it,
+you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats is completely optional, however. The plugin should work
+just fine when BetterStats is installed, the proliferator enhancements just won't be present.
+If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away
+
+For production items that can be proliferated, buttons are added next to each item where you can choose between:
+
+* Disable - don't consider profilerator when determining Theoretical max production for the item  
+* Assembler setting - Use the assemblers current setting (more products or more speed) when calculating theoretical max
+* Force speed - Calculate theoretical max assuming every assembler is in Production Speedup mode
+* Force productivity - Calculate theoretical max assuming every assembler is in Extra Products mode. Only available for recipes that support extra products
+
+![Proliferator](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/stats_buttons?raw=true)
+
 ## Config
 
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
 
 ## Notes
-This mod was originally planned as an enhancement to BetterStats by brokenmass which is why it borrows code from and depends on it.
-The plan is to remove that requirement at some point in the future.
+This mod was originally planned as an enhancement to BetterStats by brokenmass.
 
 Planetary consumption/production is only calculated one time after the statistics window is opened. If you add machines to your factory while the stats window is
 open (maybe you're running at a very high resolution?) then you'll have to close and re-open the window to see those values update to reflect the change
@@ -24,6 +39,11 @@ For now installation is only supported through a mod manager, but, in general th
 * xiaoye97-LDBTool
 
 ## Changelog
+
+### v1.0.0
+* Update: removed dependency on BetterStats. Now when that plugin is not installed a local fork of it will be used instead 
+* Update: Account for usage of proliferator in local BetterStats fork
+* Update: Detect stacking for Ray Receivers generating critical photons
 
 ### v0.1.4
 Update: Sync with update in game code that removed the 'outputing' field on assemblers and labs 

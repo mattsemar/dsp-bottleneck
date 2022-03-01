@@ -21,6 +21,7 @@ namespace Bottleneck
         public int jammedCount;
 
         private static Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
+        private static Dictionary<int, ProductionDeficitItem> _byItemOnly = new();
 
         public void AddNeeded(int itemId, int count)
         {
@@ -94,10 +95,29 @@ namespace Bottleneck
         {
             if (!_byItemByRecipeId.ContainsKey(itemId))
             {
+                if (_byItemOnly.ContainsKey(itemId))
+                {
+                    return new List<ProductionDeficitItem> { _byItemOnly[itemId] };
+                }
                 return new List<ProductionDeficitItem>();
             }
 
             return _byItemByRecipeId[itemId].Values.ToList();
+        }
+
+        public static ProductionDeficitItem FromItem(int inputItemId, int outputItemId)
+        {
+            _byItemOnly.TryGetValue(outputItemId, out ProductionDeficitItem item);
+            if (item == null)
+            {
+                _byItemOnly[outputItemId] = item = new ProductionDeficitItem();
+            }
+
+            item.inputItemId[0] = inputItemId;
+            item.inputItemIndex[inputItemId] = 0;
+            item.needed[item.inputItemIndex[inputItemId]] = 0;
+            item.recipeName = "Ray receiver";
+            return item;
         }
 
         public static ProductionDeficitItem FromItem(int itemId, AssemblerComponent assemblerComponent)
@@ -184,6 +204,12 @@ namespace Bottleneck
                 {
                     deficitItem.Clear();
                 }
+            }
+
+            foreach (var itemId in _byItemOnly.Keys)
+            {
+                var deficitItem = _byItemOnly[itemId];
+                deficitItem.Clear();
             }
         }
     }
@@ -352,6 +378,17 @@ namespace Bottleneck
             }
 
             return false;
+        }
+
+        public static void RecordDeficit(int rayReceiverProductId, PowerGeneratorComponent generator, PlanetFactory planetFactory)
+        {
+            var item = ProductionDeficitItem.FromItem(generator.catalystId, rayReceiverProductId);
+            item.assemblerCount++;
+
+            if (generator.productCount > 5)
+            {
+                item.jammedCount++;
+            }
         }
     }
 }
