@@ -9,18 +9,18 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 ## BetterStats 
 
 This plugin contains a fork of BetterStats with support for Proliferator. To use it,
-you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats is completely optional, however. The plugin should work
-just fine when BetterStats is installed, the proliferator enhancements just won't be present.
-If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away
+you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats is completely optional, however. 
+This is optional, of course, the Bottleneck plugin should work just fine when BetterStats is installed, the proliferator enhancements just won't be present.
+_Note: If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away_
 
 For production items that can be proliferated, buttons are added next to each item where you can choose between:
 
-* Disable - don't consider profilerator when determining Theoretical max production for the item  
+* Disable - don't consider Profilerator when determining Theoretical max production for the item  
 * Assembler setting - Use the assemblers current setting (more products or more speed) when calculating theoretical max
 * Force speed - Calculate theoretical max assuming every assembler is in Production Speedup mode
 * Force productivity - Calculate theoretical max assuming every assembler is in Extra Products mode. Only available for recipes that support extra products
 
-![Proliferator](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/stats_buttons?raw=true)
+![Proliferator](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/stats_buttons.png?raw=true)
 
 ## Config
 

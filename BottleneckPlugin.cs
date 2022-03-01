@@ -38,6 +38,7 @@ namespace Bottleneck
         private BottleneckTask _pendingDeficitTask;
         private Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
         private Stats.Stats _statsObj;
+        private bool _statsInitted;
 
         private void Awake()
         {
@@ -46,24 +47,38 @@ namespace Bottleneck
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
-            ConditionallyLoadStats();
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
         }
 
         private void ConditionallyLoadStats()
         {
-            var pluginInfo = BepInEx.Bootstrap.Chainloader.PluginInfos.Values.ToList().Find(pi => pi.Metadata.GUID == "com.brokenmass.plugin.DSP.BetterStats");
-            if (pluginInfo != null)
+            if (_statsInitted)
+                return;
+            Log.Info("Checking for external version of BetterStats");
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.brokenmass.plugin.DSP.BetterStats"))
             {
-                Log.Debug($"Found external version of BetterStats {pluginInfo.Metadata.Version}");
+                var pluginInfo = BepInEx.Bootstrap.Chainloader.PluginInfos["com.brokenmass.plugin.DSP.BetterStats"];
+                Log.Info($"Found external version of BetterStats {pluginInfo.Metadata.Version}");
+                _statsInitted = true;
+                return;
+            }
+
+            // see if we can see our own plugin by guid, if not, don't mark as initted
+            if (!BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(PluginInfo.PLUGIN_GUID))
+            {
+                Log.Info($"Not adding local stats yet, unable to find Bottleneck in list");
                 return;
             }
             _statsObj = gameObject.AddComponent<Stats.Stats>();
-            Log.Debug($"Added local stats {_statsObj.gameObject.activeSelf}");
+            Log.Info($"Added local stats {_statsObj.gameObject.activeSelf}");
+            _statsInitted = true;
         }
 
         private void Update()
         {
+
+            ConditionallyLoadStats();
+            
             if (_pendingMadeOnTask != null)
             {
                 var task = _pendingMadeOnTask;
@@ -206,7 +221,7 @@ namespace Bottleneck
             _uiElements.Clear();
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
             if (_instance != null && _instance._statsObj != null)
@@ -257,7 +272,7 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate")]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate"), HarmonyPriority(Priority.Last)]
         public static void UIProductEntry__OnUpdate_Postfix(UIProductEntry __instance)
         {
             if (_instance != null)
