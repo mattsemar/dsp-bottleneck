@@ -40,6 +40,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.1
+Bugfix: handle modded items that are created after this plugin is initted
+
 ### v1.0.0
 * Update: removed dependency on BetterStats. Now when that plugin is not installed a local fork of it will be used instead 
 * Update: Account for usage of proliferator in local BetterStats fork

@@ -26,6 +26,7 @@ namespace Bottleneck.Stats
             _enabled = false,
             _mode = ItemCalculationMode.None,
         };
+
         private ItemCalculationMode _mode = ItemCalculationMode.Normal;
         private bool _enabled;
 
@@ -36,6 +37,7 @@ namespace Bottleneck.Stats
         private static readonly Dictionary<int, ItemCalculationRuntimeSetting> Pool = new();
         private static ConfigFile configFile;
         private readonly ItemProto _itemProto;
+
         private ItemCalculationRuntimeSetting(int productId)
         {
             this.productId = productId;
@@ -121,7 +123,26 @@ namespace Bottleneck.Stats
 
         public static ItemCalculationRuntimeSetting ForItemId(int itemId)
         {
-            return PluginConfig.disableProliferatorCalc.Value ? None : Pool[itemId];
+            if (PluginConfig.disableProliferatorCalc.Value)
+                return None;
+            if (Pool.ContainsKey(itemId))
+                return Pool[itemId];
+            
+            Log.Info($"Found item id not previously created {itemId}");
+            var defaultValue = new ItemCalculationRuntimeSetting(itemId)
+            {
+                _enabled = true,
+                _mode = ItemCalculationMode.Normal
+            };
+            
+            var configEntry = configFile.Bind("Internal", $"ProliferatorStatsSetting_{itemId}",
+                defaultValue.Serialize(),
+                "For internal use only");
+            ConfigEntries[itemId] = configEntry;
+
+            Pool[itemId] = Deserialize(ConfigEntries[itemId].Value);
+            Pool[itemId]._configEntry = configEntry;
+            return Pool[itemId];
         }
     }
 
