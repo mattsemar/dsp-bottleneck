@@ -6,11 +6,11 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 
 ![Example](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/screenshot.png?raw=true)
 
-## BetterStats 
+## BetterStats with Proliferator
 
 This plugin contains a fork of BetterStats with support for Proliferator. To use it,
-you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats is completely optional, however. 
-This is optional, of course, the Bottleneck plugin should work just fine when BetterStats is installed, the proliferator enhancements just won't be present.
+you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats
+is completely optional, the Bottleneck plugin should work just fine when BetterStats is installed, the proliferator enhancements just won't be present.
 _Note: If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away_
 
 For production items that can be proliferated, buttons are added next to each item where you can choose between:
@@ -25,6 +25,8 @@ For production items that can be proliferated, buttons are added next to each it
 ## Config
 
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
+* 'Disable Bottleneck' lets you disable the Bottleneck functionality of this mod and just focus on stats
+* 'Disable Proliferator Calculation' removes Proliferator from Theoretical max calculations completely
 
 ## Notes
 This mod was originally planned as an enhancement to BetterStats by brokenmass.
@@ -39,6 +41,11 @@ For now installation is only supported through a mod manager, but, in general th
 * xiaoye97-LDBTool
 
 ## Changelog
+
+### v1.0.2
+* Update: combined stats collection with Bottleneck calculations to enhance performance when the official BetterStats is not installed
+* Update: added 'Disable Bottleneck' config to allow only BetterStats functionality to be used. Removes precursors, made on, etc.
+* Update: added detection for unsprayed items in bottleneck calculation
 
 ### v1.0.1
 Bugfix: handle modded items that are created after this plugin is initted

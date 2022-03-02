@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using System.Globalization;
 using BepInEx.Logging;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
+// Adapted from https://github.com/DysonSphereMod/QOL/blob/master/BetterStats/BetterStats.cs
 namespace Bottleneck.Stats
 {
-    public class Stats : MonoBehaviour
+    public class BetterStats : MonoBehaviour
     {
-        public class EnhancedUIProductEntryElements
+        private class EnhancedUIProductEntryElements
         {
             public Text maxProductionLabel;
             public Text maxProductionValue;
@@ -27,8 +28,8 @@ namespace Bottleneck.Stats
             public Text counterConsumptionValue;
             public ProliferatorOperationSetting proliferatorOperationSetting;
         }
-        
-        private static Dictionary<int, ProductMetrics> counter = new();
+
+        public static Dictionary<int, ProductMetrics> counter = new();
         private static GameObject txtGO, chxGO, filterGO;
         private static Texture2D texOff = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-off");
         private static Texture2D texOn = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-on");
@@ -36,7 +37,7 @@ namespace Bottleneck.Stats
         private static Sprite sprOff;
         private static Image checkBoxImage;
 
-        private static string filterStr = "";
+        public static string filterStr = "";
 
         private const int initialXOffset = 70;
         private const int valuesWidth = 90;
@@ -53,7 +54,6 @@ namespace Bottleneck.Stats
 
         internal void Awake()
         {
-
             try
             {
                 ProliferatorOperationSetting.Init();
@@ -75,6 +75,7 @@ namespace Bottleneck.Stats
                 Destroy(sprOn);
                 Destroy(sprOff);
             }
+
             var favoritesLabel = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Production Stat Window/product-bg/top/favorite-text");
             if (favoritesLabel != null)
             {
@@ -83,16 +84,14 @@ namespace Bottleneck.Stats
 
             ClearEnhancedUIProductEntries();
             ProliferatorOperationSetting.Unload();
-
         }
 
-        private class ProductMetrics
+        public class ProductMetrics
         {
-            public ItemProto itemProto;
-            public float production = 0;
-            public float consumption = 0;
-            public int producers = 0;
-            public int consumers = 0;
+            public float production;
+            public float consumption;
+            public int producers;
+            public int consumers;
         }
 
         private static void ClearEnhancedUIProductEntries()
@@ -115,6 +114,7 @@ namespace Bottleneck.Stats
                 Destroy(enhancement.counterConsumptionLabel.gameObject);
                 Destroy(enhancement.counterConsumptionValue.gameObject);
             }
+
             enhancements.Clear();
         }
 
@@ -145,14 +145,13 @@ namespace Bottleneck.Stats
         {
             if (value >= 1000000.0)
                 return (value / 1000000).ToString("F2") + " M";
-            else if (value >= 10000.0)
+            if (value >= 10000.0)
                 return (value / 1000).ToString("F2") + " k";
-            else if (value > 1000.0)
+            if (value > 1000.0)
                 return value.ToString("F0");
-            else if (value > 0.0)
+            if (value > 0.0)
                 return value.ToString("F1");
-            else
-                return value.ToString();
+            return value.ToString();
         }
 
         private static float ReverseFormat(string value)
@@ -417,7 +416,7 @@ namespace Bottleneck.Stats
             _inputField.placeholder = _placeholder;
 
 
-            _inputField.onValueChanged.AddListener((string value) =>
+            _inputField.onValueChanged.AddListener(value =>
             {
                 // taken from thecodershome's PR on github: https://github.com/DysonSphereMod/QOL/pull/128
                 if (_inputField.wasCanceled)
@@ -429,10 +428,11 @@ namespace Bottleneck.Stats
                 {
                     filterStr = value;
                 }
+
                 __instance.ComputeDisplayEntries();
             });
             // taken from thecodershome's PR on github: https://github.com/DysonSphereMod/QOL/pull/128
-            _inputField.onEndEdit.AddListener((string value) =>
+            _inputField.onEndEdit.AddListener(value =>
             {
                 // Reset focus to allow pressing escape key to close production panel after entering value into filter inputField
                 EventSystem.current.SetSelectedGameObject(null);
@@ -441,10 +441,9 @@ namespace Bottleneck.Stats
             chxGO.transform.SetParent(__instance.productSortBox.transform.parent, false);
             txtGO.transform.SetParent(chxGO.transform, false);
             filterGO.transform.SetParent(__instance.productSortBox.transform.parent, false);
-
         }
 
-        public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance)
+        public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance, HashSet<int> itemsToShow)
         {
             if (filterStr == "") return;
             var uiProductEntryList = __instance;
@@ -452,7 +451,7 @@ namespace Bottleneck.Stats
             {
                 UIProductEntryData entryData = uiProductEntryList.entryDatas[pIndex];
                 var proto = LDB.items.Select(entryData.itemId);
-                if (proto.name.IndexOf(filterStr, StringComparison.OrdinalIgnoreCase) < 0)
+                if (proto.name.IndexOf(filterStr, StringComparison.OrdinalIgnoreCase) < 0 && !itemsToShow.Contains(entryData.itemId))
                 {
                     uiProductEntryList.Swap(pIndex, uiProductEntryList.entryDatasCursor - 1);
                     --uiProductEntryList.entryDatasCursor;
@@ -466,6 +465,7 @@ namespace Bottleneck.Stats
             {
                 statWindow = __instance;
             }
+
             lastStatTimer = __instance.timeLevel;
         }
 
@@ -563,6 +563,7 @@ namespace Bottleneck.Stats
             {
                 return;
             }
+        
             counter.Clear();
             if (__instance.astroFilter == -1)
             {
@@ -605,231 +606,60 @@ namespace Bottleneck.Stats
             var factorySystem = planetFactory.factorySystem;
             var transport = planetFactory.transport;
             var veinPool = planetFactory.planet.factory.veinPool;
-            var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
             var maxProductivityIncrease = ResearchTechHelper.GetMaxProductivityIncrease();
             var maxSpeedIncrease = ResearchTechHelper.GetMaxSpeedIncrease();
 
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
                 var miner = factorySystem.minerPool[i];
-                if (i != miner.id) continue;
-
-                var productId = miner.productId;
-                var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
-
-                if (miner.type == EMinerType.Water)
-                {
-                    productId = planetFactory.planet.waterItemId;
-                }
-                else if (productId == 0)
-                {
-                    productId = veinPool[veinId].productId;
-                }
-
-                if (productId == 0) continue;
-
-
-                EnsureId(ref counter, productId);
-
-                float frequency = 60f / (float)((double)miner.period / 600000.0);
-                float speed = (float)(0.0001 * (double)miner.speed * miningSpeedScale);
-
-                float production = 0f;
-                if (factorySystem.minerPool[i].type == EMinerType.Water)
-                {
-                    production = frequency * speed;
-                }
-                if (factorySystem.minerPool[i].type == EMinerType.Oil)
-                {
-                    production = frequency * speed * (float)((double)veinPool[veinId].amount * (double)VeinData.oilSpeedMultiplier);
-                }
-
-                // flag to tell us if it's one of the advanced miners they added in the 20-Jan-2022 release
-                var isAdvancedMiner = false;
-                if (factorySystem.minerPool[i].type == EMinerType.Vein)
-                {
-                    production = frequency * speed * miner.veinCount;
-                    var minerEntity = factorySystem.factory.entityPool[miner.entityId];
-                    isAdvancedMiner = minerEntity.stationId > 0 && minerEntity.minerId > 0;
-                }
-
-                // advanced miners aren't limited by belts
-                if (!isAdvancedMiner)
-                {
-                    production = Math.Min(BELT_MAX_ITEMS_PER_MINUTE, production);
-                }
-
-                counter[productId].production += production;
-                counter[productId].producers++;
+                RecordMinerStats(factorySystem.minerPool[i].type, miner, veinPool, planetFactory.planet.waterItemId);
             }
+
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
             {
                 var assembler = factorySystem.assemblerPool[i];
-                if (assembler.id != i || assembler.recipeId == 0) continue;
-
-                var baseFrequency = 60f / (float)(assembler.timeSpend / 600000.0);
-                var productionFrequency = baseFrequency;
-                var speed = (float)(0.0001 * (double)assembler.speed);
-
-                var runtimeSetting =
-                    PluginConfig.disableProliferatorCalc.Value ? ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(assembler.recipeId);
-
-                // forceAccMode is 'Production Speedup' mode. It just adds a straight increase to both production and consumption rate
-                if (runtimeSetting.Enabled)
-                {
-                    if (runtimeSetting.Mode == ItemCalculationMode.Normal)
-                    {
-                        // let assembler decide
-                        if (assembler.forceAccMode)
-                        {
-                            speed += speed * maxSpeedIncrease;
-                        }
-                        else
-                        {
-                            productionFrequency += productionFrequency * maxProductivityIncrease;
-                        }
-                    }
-                    else if (runtimeSetting.Mode == ItemCalculationMode.ForceSpeed)
-                    {
-                        speed += speed * maxSpeedIncrease;
-                    }
-                    else if (runtimeSetting.Mode == ItemCalculationMode.ForceProductivity)
-                    {
-                        productionFrequency += productionFrequency * maxProductivityIncrease;
-                    }
-                    else
-                    {
-                        Log.LogWarning($"unexpected runtime setting ${JsonUtility.ToJson(runtimeSetting)}");
-                    }
-                }
-
-                for (int j = 0; j < assembler.requires.Length; j++)
-                {
-                    var productId = assembler.requires[j];
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].consumption += baseFrequency * speed * assembler.requireCounts[j];
-                    counter[productId].consumers++;
-                }
-
-                for (int j = 0; j < assembler.products.Length; j++)
-                {
-                    var productId = assembler.products[j];
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].production += productionFrequency * speed * assembler.productCounts[j];
-                    counter[productId].producers++;
-                }
+                RecordAssemblerStats(assembler, maxSpeedIncrease, maxProductivityIncrease);
             }
+
             for (int i = 1; i < factorySystem.fractionateCursor; i++)
             {
                 var fractionator = factorySystem.fractionatePool[i];
-                if (fractionator.id != i) continue;
-
-                if (fractionator.fluidId != 0)
-                {
-                    var productId = fractionator.fluidId;
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].consumption += 60f * 30f * fractionator.produceProb;
-                    counter[productId].consumers++;
-                }
-                if (fractionator.productId != 0)
-                {
-                    var productId = fractionator.productId;
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].production += 60f * 30f * fractionator.produceProb;
-                    counter[productId].producers++;
-                }
-
+                RecordFractionatorStats(fractionator);
             }
+
             for (int i = 1; i < factorySystem.ejectorCursor; i++)
             {
                 var ejector = factorySystem.ejectorPool[i];
                 if (ejector.id != i) continue;
 
-                EnsureId(ref counter, ejector.bulletId);
-
-                counter[ejector.bulletId].consumption += 60f / (float)(ejector.chargeSpend + ejector.coldSpend) * 600000f;
-                counter[ejector.bulletId].consumers++;
+                RecordEjectorStats(ejector);
             }
+
             for (int i = 1; i < factorySystem.siloCursor; i++)
             {
                 var silo = factorySystem.siloPool[i];
                 if (silo.id != i) continue;
 
-                EnsureId(ref counter, silo.bulletId);
-
-                counter[silo.bulletId].consumption += 60f / (float)(silo.chargeSpend + silo.coldSpend) * 600000f;
-                counter[silo.bulletId].consumers++;
+                RecordSiloStats(silo);
             }
 
             for (int i = 1; i < factorySystem.labCursor; i++)
             {
                 var lab = factorySystem.labPool[i];
                 if (lab.id != i) continue;
-                (float baseFrequency, float productionFrequency) = DetermineLabFrequencies(ref lab, maxProductivityIncrease, maxSpeedIncrease);
-
-                if (lab.matrixMode)
-                {
-                    for (int j = 0; j < lab.requires.Length; j++)
-                    {
-                        var productId = lab.requires[j];
-                        EnsureId(ref counter, productId);
-
-                        counter[productId].consumption += baseFrequency * lab.requireCounts[j];
-                        counter[productId].consumers++;
-                    }
-
-                    for (int j = 0; j < lab.products.Length; j++)
-                    {
-                        var productId = lab.products[j];
-                        EnsureId(ref counter, productId);
-
-                        counter[productId].production += productionFrequency * lab.productCounts[j];
-                        counter[productId].producers++;
-                    }
-                }
-                else if (lab.researchMode && lab.techId > 0)
-                {
-                    // In this mode we can't just use lab.timeSpend to figure out how long it takes to consume 1 item (usually a cube)
-                    // So, we figure out how many hashes a single cube represents and use the research mode research speed to come up with what is basically a research rate
-                    var techProto = LDB.techs.Select(lab.techId);
-                    if (techProto == null)
-                        continue;
-                    TechState techState = GameMain.history.TechState(techProto.ID);
-                    float hashPerMinute = (float)(60.0f * (GameMain.data.history.techSpeed * (1.0 + (double) maxProductivityIncrease / 6.0f)));
-
-                    for (int index = 0; index < techProto.itemArray.Length; ++index)
-                    {
-                        var item = techProto.Items[index];
-                        var researchRateSec = (float) GameMain.history.techSpeed * GameMain.tickPerSec;
-                        var researchFreq =  (float) (techState.uPointPerHash * hashPerMinute / researchRateSec);
-                        EnsureId(ref counter, item);
-                        counter[item].consumers++;
-                        counter[item].consumption += researchFreq * GameMain.history.techSpeed;
-                    }
-                }
+                RecordLabStats(lab, maxSpeedIncrease, maxProductivityIncrease);
             }
+
             double gasTotalHeat = planetFactory.planet.gasTotalHeat;
+#pragma warning disable Publicizer001
             var collectorsWorkCost = transport.collectorsWorkCost;
+#pragma warning restore Publicizer001
             for (int i = 1; i < transport.stationCursor; i++)
             {
                 var station = transport.stationPool[i];
-                if (station == null || station.id != i || !station.isCollector) continue;
-
-                float collectSpeedRate = (gasTotalHeat - collectorsWorkCost > 0.0) ? ((float)((miningSpeedScale * gasTotalHeat - collectorsWorkCost) / (gasTotalHeat - collectorsWorkCost))) : 1f;
-
-                for (int j = 0; j < station.collectionIds.Length; j++)
-                {
-                    var productId = station.collectionIds[j];
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].production += 60f * TICKS_PER_SEC * station.collectionPerTick[j] * collectSpeedRate;
-                    counter[productId].producers++;
-                }
+                RecordOrbitalCollectorStats(station, gasTotalHeat, collectorsWorkCost);
             }
+
             for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
             {
                 var generator = planetFactory.powerSystem.genPool[i];
@@ -837,38 +667,15 @@ namespace Bottleneck.Stats
                 {
                     continue;
                 }
-                var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
-                if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
-                {
-                    continue;
-                }
 
-                if (isFuelConsumer)
-                {
-                    // account for fuel consumption by power generator
-                    var productId = generator.fuelId;
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].consumption += 60.0f * TICKS_PER_SEC * generator.useFuelPerTick / generator.fuelHeat;
-                    counter[productId].consumers++;
-                }
-                else
-                {
-                    var productId = generator.productId;
-                    EnsureId(ref counter, productId);
-
-                    counter[productId].production += 60.0f * TICKS_PER_SEC * generator.capacityCurrentTick / generator.productHeat;
-                    counter[productId].producers++;
-                    if (generator.catalystId > 0)
-                    {
-                        // account for consumption of critical photons by ray receivers
-                        EnsureId(ref counter, generator.catalystId);
-                        counter[generator.catalystId].consumption += RAY_RECEIVER_GRAVITON_LENS_CONSUMPTION_RATE_PER_MIN;
-                        counter[generator.catalystId].consumers++;
-                    }
-                }
+                RecordGeneratorStats(generator);
             }
 
+            RecordSprayCoaterStats(planetFactory);
+        }
+
+        public static void RecordSprayCoaterStats(PlanetFactory planetFactory)
+        {
             var cargoTraffic = planetFactory.cargoTraffic;
             for (int i = 0; i < planetFactory.cargoTraffic.spraycoaterCursor; i++)
             {
@@ -888,13 +695,255 @@ namespace Bottleneck.Stats
                 // beltspeed is 1,2,5 so must be multiplied by 6 to get 6,12,30
                 var beltRatePerMin = 6 * beltComponent.speed * 60;
                 int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
-                var frequency = beltMaxStack * beltRatePerMin / (float) numbersOfSprays;
+                var frequency = beltMaxStack * beltRatePerMin / (float)numbersOfSprays;
                 var productId = sprayCoater.incItemId;
                 EnsureId(ref counter, productId);
 
                 counter[productId].consumption += frequency;
                 counter[productId].consumers++;
             }
+        }
+
+        public static void RecordLabStats(LabComponent lab, float maxSpeedIncrease, float maxProductivityIncrease)
+        {
+            (float baseFrequency, float productionFrequency) = DetermineLabFrequencies(ref lab, maxProductivityIncrease, maxSpeedIncrease);
+
+            if (lab.matrixMode)
+            {
+                for (int j = 0; j < lab.requires.Length; j++)
+                {
+                    var productId = lab.requires[j];
+                    EnsureId(ref counter, productId);
+
+                    counter[productId].consumption += baseFrequency * lab.requireCounts[j];
+                    counter[productId].consumers++;
+                }
+
+                for (int j = 0; j < lab.products.Length; j++)
+                {
+                    var productId = lab.products[j];
+                    EnsureId(ref counter, productId);
+
+                    counter[productId].production += productionFrequency * lab.productCounts[j];
+                    counter[productId].producers++;
+                }
+            }
+            else if (lab.researchMode && lab.techId > 0)
+            {
+                // In this mode we can't just use lab.timeSpend to figure out how long it takes to consume 1 item (usually a cube)
+                // So, we figure out how many hashes a single cube represents and use the research mode research speed to come up with what is basically a research rate
+                var techProto = LDB.techs.Select(lab.techId);
+                if (techProto == null)
+                    return;
+                TechState techState = GameMain.history.TechState(techProto.ID);
+                float hashPerMinute = (float)(60.0f * (GameMain.data.history.techSpeed * (1.0 + (double)maxProductivityIncrease / 6.0f)));
+
+                for (int index = 0; index < techProto.itemArray.Length; ++index)
+                {
+                    var item = techProto.Items[index];
+                    var researchRateSec = (float)GameMain.history.techSpeed * GameMain.tickPerSec;
+                    var researchFreq = (float)(techState.uPointPerHash * hashPerMinute / researchRateSec);
+                    EnsureId(ref counter, item);
+                    counter[item].consumers++;
+                    counter[item].consumption += researchFreq * GameMain.history.techSpeed;
+                }
+            }
+        }
+
+        public static void RecordSiloStats(SiloComponent silo)
+        {
+            EnsureId(ref counter, silo.bulletId);
+
+            counter[silo.bulletId].consumption += 60f / (silo.chargeSpend + silo.coldSpend) * 600000f;
+            counter[silo.bulletId].consumers++;
+        }
+
+        public static void RecordEjectorStats(EjectorComponent ejector)
+        {
+            EnsureId(ref counter, ejector.bulletId);
+
+            counter[ejector.bulletId].consumption += 60f / (ejector.chargeSpend + ejector.coldSpend) * 600000f;
+            counter[ejector.bulletId].consumers++;
+        }
+
+
+        public static void RecordOrbitalCollectorStats(StationComponent station, double gasTotalHeat, double collectorsWorkCost)
+        {
+            if (station == null || station.id < 1 || !station.isCollector) return;
+            var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
+            float collectSpeedRate = (gasTotalHeat - collectorsWorkCost > 0.0)
+                ? ((float)((miningSpeedScale * gasTotalHeat - collectorsWorkCost) / (gasTotalHeat - collectorsWorkCost)))
+                : 1f;
+
+            for (int j = 0; j < station.collectionIds.Length; j++)
+            {
+                var productId = station.collectionIds[j];
+                EnsureId(ref counter, productId);
+
+                counter[productId].production += 60f * TICKS_PER_SEC * station.collectionPerTick[j] * collectSpeedRate;
+                counter[productId].producers++;
+            }
+        }
+
+        public static void RecordFractionatorStats(FractionateComponent fractionator)
+        {
+            if (fractionator.id < 1) return;
+
+            if (fractionator.fluidId != 0)
+            {
+                var productId = fractionator.fluidId;
+                EnsureId(ref counter, productId);
+
+                counter[productId].consumption += 60f * 30f * fractionator.produceProb;
+                counter[productId].consumers++;
+            }
+
+            if (fractionator.productId != 0)
+            {
+                var productId = fractionator.productId;
+                EnsureId(ref counter, productId);
+
+                counter[productId].production += 60f * 30f * fractionator.produceProb;
+                counter[productId].producers++;
+            }
+        }
+
+        public static void RecordAssemblerStats(AssemblerComponent assembler, float maxSpeedIncrease, float maxProductivityIncrease)
+        {
+            if (assembler.id < 1 || assembler.recipeId == 0)
+                return;
+            var baseFrequency = 60f / (float)(assembler.timeSpend / 600000.0);
+            var productionFrequency = baseFrequency;
+            var speed = (float)(0.0001 * assembler.speed);
+
+            var runtimeSetting =
+                PluginConfig.disableProliferatorCalc.Value ? ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(assembler.recipeId);
+
+            // forceAccMode is 'Production Speedup' mode. It just adds a straight increase to both production and consumption rate
+            if (runtimeSetting.Enabled)
+            {
+                if (runtimeSetting.Mode == ItemCalculationMode.Normal)
+                {
+                    // let assembler decide
+                    if (assembler.forceAccMode)
+                    {
+                        speed += speed * maxSpeedIncrease;
+                    }
+                    else
+                    {
+                        productionFrequency += productionFrequency * maxProductivityIncrease;
+                    }
+                }
+                else if (runtimeSetting.Mode == ItemCalculationMode.ForceSpeed)
+                {
+                    speed += speed * maxSpeedIncrease;
+                }
+                else if (runtimeSetting.Mode == ItemCalculationMode.ForceProductivity)
+                {
+                    productionFrequency += productionFrequency * maxProductivityIncrease;
+                }
+                else
+                {
+                    Log.LogWarning($"unexpected runtime setting ${JsonUtility.ToJson(runtimeSetting)}");
+                }
+            }
+
+            for (int j = 0; j < assembler.requires.Length; j++)
+            {
+                var productId = assembler.requires[j];
+                EnsureId(ref counter, productId);
+
+                counter[productId].consumption += baseFrequency * speed * assembler.requireCounts[j];
+                counter[productId].consumers++;
+            }
+
+            for (int j = 0; j < assembler.products.Length; j++)
+            {
+                var productId = assembler.products[j];
+                EnsureId(ref counter, productId);
+
+                counter[productId].production += productionFrequency * speed * assembler.productCounts[j];
+                counter[productId].producers++;
+            }
+        }
+
+        public static void RecordGeneratorStats(PowerGeneratorComponent generator)
+        {
+            var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
+            if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
+            {
+                return;
+            }
+
+            if (isFuelConsumer)
+            {
+                // account for fuel consumption by power generator
+                var productId = generator.fuelId;
+                EnsureId(ref counter, productId);
+
+                counter[productId].consumption += 60.0f * TICKS_PER_SEC * generator.useFuelPerTick / generator.fuelHeat;
+                counter[productId].consumers++;
+            }
+            else
+            {
+                var productId = generator.productId;
+                EnsureId(ref counter, productId);
+
+                counter[productId].production += 60.0f * TICKS_PER_SEC * generator.capacityCurrentTick / generator.productHeat;
+                counter[productId].producers++;
+                if (generator.catalystId > 0)
+                {
+                    // account for consumption of critical photons by ray receivers
+                    EnsureId(ref counter, generator.catalystId);
+                    counter[generator.catalystId].consumption += RAY_RECEIVER_GRAVITON_LENS_CONSUMPTION_RATE_PER_MIN;
+                    counter[generator.catalystId].consumers++;
+                }
+            }
+        }
+
+        public static void RecordMinerStats(EMinerType minerType, MinerComponent miner, VeinData[] veinPool, int waterItemId)
+        {
+            if (miner.id < 1) return;
+            var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
+            var productId = miner.productId;
+            var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
+
+            if (miner.type == EMinerType.Water)
+            {
+                productId = waterItemId;
+            }
+            else if (productId == 0)
+            {
+                productId = veinPool[veinId].productId;
+            }
+
+            if (productId == 0) return;
+
+
+            EnsureId(ref counter, productId);
+
+            float frequency = 60f / (float)(miner.period / 600000.0);
+            float speed = (float)(0.0001 * miner.speed * miningSpeedScale);
+
+            float production = 0f;
+            if (minerType == EMinerType.Water)
+            {
+                production = frequency * speed;
+            }
+
+            if (minerType == EMinerType.Oil)
+            {
+                production = frequency * speed * (float)(veinPool[veinId].amount * (double)VeinData.oilSpeedMultiplier);
+            }
+
+            if (minerType == EMinerType.Vein)
+            {
+                production = frequency * speed * miner.veinCount;
+            }
+
+
+            counter[productId].production += production;
+            counter[productId].producers++;
         }
 
         private static (float, float) DetermineLabFrequencies(ref LabComponent lab, float maxProductivityIncrease, float maxSpeedIncrease)
@@ -914,7 +963,7 @@ namespace Bottleneck.Stats
                     {
                         // productivity bonuses are in Cargo table in the incTableMilli array
                         baseFrequency = (float)(1f / (lab.timeSpend / GameMain.tickPerSec / (60f * lab.speed)));
-                        productionFrequency = baseFrequency +  baseFrequency * maxProductivityIncrease;
+                        productionFrequency = baseFrequency + baseFrequency * maxProductivityIncrease;
                     }
                     else
                     {

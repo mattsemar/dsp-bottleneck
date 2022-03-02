@@ -11,6 +11,7 @@ namespace Bottleneck
         public static ConfigEntry<bool> displayPerSecond;
         public static ConfigEntry<bool> disableProliferatorCalc;
         public static ConfigEntry<bool> disableStackingCalc;
+        public static ConfigEntry<bool> statsOnly;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -32,6 +33,8 @@ namespace Bottleneck
                 "Tells mod to ignore proliferator points completely. Can cause production rates to exceed theoretical max values");
             disableStackingCalc = confFile.Bind("General", "Disable Stacking Calculation", false,
                 "Tells mod to ignore unlocked tech for stacking items on belts. By default uses same 'Tech Limit' value as stations use");
+            statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
+                "Disable Bottleneck functionality, use only BetterStats features");
         }
     }
 }

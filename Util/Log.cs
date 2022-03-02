@@ -27,7 +27,7 @@ namespace Bottleneck.Util
 
         public static void LogAndPopupMessage(string message)
         {
-            UIRealtimeTip.Popup(message);
+            UIRealtimeTip.Popup(message, false);
             logger.LogInfo($"POPUP: '{message}'");
         }
     }

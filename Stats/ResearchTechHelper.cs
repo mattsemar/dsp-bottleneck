@@ -20,7 +20,7 @@ namespace Bottleneck.Stats
             return (float)Cargo.accTableMilli[highestProliferatorTechUnlocked];
         }
 
-        private static int GetMaxIncIndex()
+        public static int GetMaxIncIndex()
         {
             InitTechProtos();
             if (GameMain.history.techStates[_sprayLevel3Proto.ID].unlocked)
