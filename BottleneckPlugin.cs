@@ -288,7 +288,7 @@ namespace Bottleneck
         {
             if (_instance != null)
             {
-                if (_instance._betterStatsObj != null && PluginConfig.statsOnly.Value)
+                if (_instance._betterStatsObj != null)
                     BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
                 if (!PluginConfig.statsOnly.Value)
                     _instance.OnUpdate(__instance);
