@@ -42,8 +42,10 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.3
+Bugfix: resolve issue with initialization of Proliferator info when using BetterStats official was enabled
 ### v1.0.2
-* Update: combined stats collection with Bottleneck calculations to enhance performance when the official BetterStats is not installed
+* Update: combined stats collection with bottleneck calculations
 * Update: added 'Disable Bottleneck' config to allow only BetterStats functionality to be used. Removes precursors, made on, etc.
 * Update: added detection for unsprayed items in bottleneck calculation
 

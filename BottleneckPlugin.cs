@@ -61,6 +61,7 @@ namespace Bottleneck
                 var pluginInfo = Chainloader.PluginInfos["com.brokenmass.plugin.DSP.BetterStats"];
                 Log.Info($"Found external version of BetterStats {pluginInfo.Metadata.Version}");
                 _statsInitted = true;
+                ProliferatorOperationSetting.Init();
                 return;
             }
 
@@ -287,7 +288,7 @@ namespace Bottleneck
         {
             if (_instance != null)
             {
-                if (_instance._betterStatsObj != null)
+                if (_instance._betterStatsObj != null && PluginConfig.statsOnly.Value)
                     BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
                 if (!PluginConfig.statsOnly.Value)
                     _instance.OnUpdate(__instance);

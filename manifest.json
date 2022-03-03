@@ -1,6 +1,6 @@
 {
     "name":  "Bottleneck",
-    "version_number":  "1.0.2",
+    "version_number":  "1.0.3",
     "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
     "description":  "Adds production/consumption planet list to statistics panel. Also shows missing precursor items (aka bottlenecks) and supports filtering list by only precursor (or consumer) items",
     "dependencies":  [
