@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Bottleneck.Logistics;
 using Bottleneck.Stats;
 using Bottleneck.Util;
 
@@ -21,6 +22,7 @@ namespace Bottleneck
         private readonly Dictionary<int, int> inputItemIndex = new();
         private int neededCount;
         public int jammedCount;
+        private static StringBuilder _logisticsAmounts = new("          ", 10);
 
         private static Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
         private static Dictionary<int, ProductionDeficitItem> _byItemOnly = new();
@@ -34,11 +36,11 @@ namespace Bottleneck
             }
         }
 
-        public (string neededStr, string stackStr, string unpoweredStr, string unsprayStr) TopNeeded(int outputProductId)
+        public (string neededStr, string stackStr, string unpoweredStr, string unsprayStr, string availItemsStr) TopNeeded(int outputProductId, int astroId)
         {
             if (assemblerCount < 1)
             {
-                return ("", "", "", "");
+                return ("", "", "", "", "");
             }
 
             var neededMax = int.MinValue;
@@ -48,6 +50,8 @@ namespace Bottleneck
             var secondAssemblerNeedingCount = int.MinValue;
             var missingSprayCount = 0;
             var missingSprayName = "";
+            var lowItemCount = int.MaxValue;
+            var lowItemCountMsg = "";
             var spraySetting = ItemCalculationRuntimeSetting.ForItemId(outputProductId);
             bool includeSpray = !PluginConfig.disableProliferatorCalc.Value && spraySetting.Enabled && spraySetting.Mode != ItemCalculationMode.None;
             for (int i = 0; i < neededCount; i++)
@@ -59,6 +63,17 @@ namespace Bottleneck
                     neededName = inputItemNames[i];
                     secondAssemblerNeedingCount = assemblerNeedingCount;
                     assemblerNeedingCount = assemblersNeedingCount[i];
+                }
+
+                if (ResearchTechHelper.IsLogisticsUnlocked() && LogisticsNetwork.IsFirstLoadComplete)
+                {
+                    var byItemSummary = LogisticsNetwork.ForItemId(inputItemId[i], astroId);
+                    if (byItemSummary != null && byItemSummary.SuppliedItems < lowItemCount && byItemSummary.SuppliedItems < 4 * assemblerCount)
+                    {
+                        StringBuilderUtility.WriteKMG(_logisticsAmounts, 6, byItemSummary.AvailableItems);
+                        lowItemCountMsg = $"{inputItemNames[i]} {_logisticsAmounts}";
+                        lowItemCount = byItemSummary.SuppliedItems;
+                    }
                 }
 
                 if (includeSpray && assemblersMissingSprayCount[i] > 0 && assemblersMissingSprayCount[i] > missingSprayCount)
@@ -75,13 +90,13 @@ namespace Bottleneck
             var unpoweredPercent = (double)lackingPowerCount / assemblerCount;
             var unpoweredstr = unpoweredPercent < 0.01 ? "" : $"{unpoweredPercent:P2}";
             var unsprayedPercent = (double)missingSprayCount / assemblerCount;
-            var missingSprayStr = (double)missingSprayCount > 0.01 ? $"{missingSprayName} {unsprayedPercent:P2}" : "";
+            var missingSprayStr = missingSprayCount > 0.01 ? $"{missingSprayName} {unsprayedPercent:P2}" : "";
             if (secondNeededName.Length > 0 && (double)secondAssemblerNeedingCount / assemblerCount > 0.01)
             {
-                return ($"{neededStr} (2nd: {secondNeededName})".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr);
+                return ($"{neededStr} (2nd: {secondNeededName})".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr, lowItemCountMsg);
             }
 
-            return ( $"{neededStr}".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr );
+            return ( $"{neededStr}".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr, lowItemCountMsg );
         }
 
         public HashSet<int> NeededItems()
@@ -243,15 +258,15 @@ namespace Bottleneck
             ProductionDeficitItem.ClearCounts();
         }
 
-        public static string MostNeeded(int recipeProductId)
+        public static string MostNeeded(int recipeProductId, int astroId)
         {
             var result = new StringBuilder();
             var productionDeficitItems = ProductionDeficitItem.ForItemId(recipeProductId);
             foreach (var deficitItem in productionDeficitItems)
             {
-                var (neededStr, stackingStr, unpoweredStr, unsprayedStr) = deficitItem.TopNeeded(recipeProductId);
+                var (neededStr, stackingStr, unpoweredStr, unsprayedStr, lowAvailStr) = deficitItem.TopNeeded(recipeProductId, astroId);
 
-                if (neededStr.Length == 0 && stackingStr.Length == 0 && unpoweredStr.Length == 0 && unsprayedStr.Length == 0)
+                if (neededStr.Length == 0 && stackingStr.Length == 0 && unpoweredStr.Length == 0 && unsprayedStr.Length == 0 && lowAvailStr.Length == 0)
                     continue;
                 if (result.Length > 0)
                     result.Append("\r\n");
@@ -265,6 +280,8 @@ namespace Bottleneck
                         tmpResultStr.Append($", Under powered: {unpoweredStr}");
                     if (unsprayedStr.Length > 0)
                         tmpResultStr.Append($", Missing spray: {unsprayedStr}");
+                    if (lowAvailStr.Length > 0)
+                        tmpResultStr.Append($"\n <b>Logistics</b>: {lowAvailStr}");
                 }
                 else if (stackingStr.Length > 0)
                 {
@@ -273,14 +290,22 @@ namespace Bottleneck
                         tmpResultStr.Append($", Under powered: {unpoweredStr}");
                     if (unsprayedStr.Length > 0)
                         tmpResultStr.Append($", Missing spray: {unsprayedStr}");
+                    if (lowAvailStr.Length > 0)
+                        tmpResultStr.Append($", <b>Logistics</b>: {lowAvailStr}");
                 }
                 else if (unpoweredStr.Length > 0)
                 {
                     tmpResultStr.Append($"Under powered: {unpoweredStr}");
                 }
-                else
+                else if (unsprayedStr.Length > 0)
                 {
                     tmpResultStr.Append($"Missing spray: {unsprayedStr}");
+                    if (lowAvailStr.Length > 0)
+                        tmpResultStr.Append($", <b>Logistics</b>: {lowAvailStr}");
+                }
+                else
+                {
+                    tmpResultStr.Append($"<b>Logistics</b>: {lowAvailStr}");
                 }
 
                 if (productionDeficitItems.Count > 1)

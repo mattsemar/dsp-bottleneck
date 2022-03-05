@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Bootstrap;
+using Bottleneck.Logistics;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
@@ -40,6 +41,7 @@ namespace Bottleneck
         private Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
         private BetterStats _betterStatsObj;
         private bool _statsInitted;
+        public int astroFilter { get; set; }
 
         private void Awake()
         {
@@ -80,6 +82,20 @@ namespace Bottleneck
         private void Update()
         {
             ConditionallyLoadStats();
+            if (GameMain.mainPlayer == null || UIRoot.instance == null || UIRoot.instance.uiGame == null || UIRoot.instance.uiGame.globemap == null)
+            {
+                return;
+            }
+
+            if (!GameMain.isRunning)
+            {
+                return;
+            }
+
+            if (!LogisticsNetwork.IsInitted)
+            {
+                LogisticsNetwork.Start();
+            }
 
             if (_pendingMadeOnTask != null)
             {
@@ -101,7 +117,6 @@ namespace Bottleneck
             {
                 var task = _pendingDeficitTask;
                 _pendingDeficitTask = null;
-                Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
                 ProcessDeficitTask(task);
                 _deficitComputedSinceOpen = true;
             }
@@ -261,11 +276,13 @@ namespace Bottleneck
         {
             if (_instance == null)
                 return;
+            _instance.astroFilter = __instance.astroFilter;
             if (_instance._betterStatsObj != null)
                 BetterStats.UIStatisticsWindow__OnUpdate_Prefix(__instance);
             if (!PluginConfig.statsOnly.Value)
                 _instance.UpdateButtonState();
         }
+
 
         private void UpdateButtonState()
         {
@@ -323,7 +340,7 @@ namespace Bottleneck
                 return;
             }
 
-            if (planetUsageMode || !_enableMadeOn)
+            if (planetUsageMode || !_madeOnComputedSinceOpen)
             {
                 _pendingMadeOnTask = new BottleneckTask
                 {
@@ -376,10 +393,10 @@ namespace Bottleneck
                         elt.precursorButton.tips.tipText = "Production planets not shown when single planet selected";
                     }
 
-                    var deficitItemName = ProductionDeficit.MostNeeded(productId);
-                    if (deficitItemName.Length > 0)
+                    var deficitItemSummary = ProductionDeficit.MostNeeded(productId, astroFilter);
+                    if (deficitItemSummary.Length > 0)
                     {
-                        elt.precursorButton.tips.tipText += $"\r\n<b>Bottlenecks</b>\r\n{deficitItemName}";
+                        elt.precursorButton.tips.tipText += $"\r\n<b>Bottlenecks</b>\r\n{deficitItemSummary}";
                     }
                 }
                 else
@@ -489,7 +506,7 @@ namespace Bottleneck
                         foreach (var gpItem in grandParentItems)
                         {
                             _itemFilter.Add(gpItem);
-                        }       
+                        }
                     }
                 }
             }
@@ -500,6 +517,7 @@ namespace Bottleneck
                 {
                     _itemFilter.Add(successorItem);
                 }
+
                 if (_itemFilter.Count < 5)
                 {
                     foreach (var successorItem in successorItems)
@@ -508,7 +526,7 @@ namespace Bottleneck
                         foreach (var gcItem in grandChildItems)
                         {
                             _itemFilter.Add(gcItem);
-                        }       
+                        }
                     }
                 }
             }
@@ -823,6 +841,13 @@ namespace Bottleneck
             else
                 _productionLocations[productId].AddProduction(planet.displayName, 1);
             keys.Add(productionKey);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GameMain), nameof(GameMain.End))]
+        public static void OnGameStart()
+        {
+            LogisticsNetwork.Reset();
         }
     }
 }

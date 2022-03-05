@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using Bottleneck.Util;
 
 namespace Bottleneck.Stats
 {
@@ -7,6 +9,12 @@ namespace Bottleneck.Stats
         private static TechProto _sprayLevel3Proto;
         private static TechProto _sprayLevel2Proto;
         private static TechProto _sprayLevel1Proto;
+        private const int PlanetLogisticStationId = 2103;
+        private const int StellarLogisticStationId = 2104;
+        private const int Warper = 1210;
+        private static DateTime _lastCheckedUnlockedState = DateTime.Now.AddDays(-1);
+        private static bool _cachedLogisticsUnlockedValue;
+        private static bool _cachedStellarUnlockedValue;
 
         public static float GetMaxProductivityIncrease()
         {
@@ -77,6 +85,29 @@ namespace Bottleneck.Stats
             var stationPilerLevel2 = GameMain.history.TechUnlocked(3802) ? stationPilerLevel1 + (int)LDB.techs.Select(3802).UnlockValues[0] : stationPilerLevel1;
             var maxStationPilerTech = GameMain.history.TechUnlocked(3803) ? stationPilerLevel2 + (int)LDB.techs.Select(3803).UnlockValues[0] : stationPilerLevel2;
             return maxStationPilerTech;
+        }
+
+        public static bool IsLogisticsUnlocked()
+        {
+            UpdateCachedUnlockValues();
+            return _cachedLogisticsUnlockedValue;
+        }
+
+        public static bool IsStellarLogisticsUnlocked()
+        {
+            UpdateCachedUnlockValues();
+            return _cachedStellarUnlockedValue;
+        }
+        
+        private static void UpdateCachedUnlockValues()
+        {
+            if (!_cachedLogisticsUnlockedValue && (DateTime.Now - _lastCheckedUnlockedState).TotalMinutes > 10)
+            {
+                _cachedLogisticsUnlockedValue = GameMain.history.ItemUnlocked(PlanetLogisticStationId);
+                _cachedStellarUnlockedValue = GameMain.history.ItemUnlocked(StellarLogisticStationId) && GameMain.history.ItemUnlocked(Warper);
+                Log.Debug($"cached logistics unlocked {_cachedLogisticsUnlockedValue}");
+                _lastCheckedUnlockedState = DateTime.Now;
+            }
         }
     }
 }

@@ -36,5 +36,17 @@ namespace Bottleneck
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
         }
+
+        private static bool _paused;
+
+        public static void SetRunningState(bool running)
+        {
+            _paused = !running;
+        }
+        
+        public static bool IsPaused()
+        {
+            return _paused;
+        }
     }
 }
