@@ -395,7 +395,7 @@ namespace Bottleneck
 
             for (int i = 0; i < lab.products.Length; i++)
             {
-                if (lab.time > lab.timeSpend)
+                if (lab.time >= lab.timeSpend)
                 {
                     item.jammedCount++;
                     break;

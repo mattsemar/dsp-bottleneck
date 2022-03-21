@@ -42,6 +42,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.6
+Bugfix: fix labs not detecting stacking condition 
+
 ### v1.0.5
 Bugfix: fix detection of non-productive assembler recipe default mode. Assemblers for antimatter treated as if they supported productivity mode 
 

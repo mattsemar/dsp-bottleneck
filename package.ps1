@@ -14,6 +14,7 @@ $sourceFileContent = Get-Content -path .\Bottleneck.csproj -Raw
 $sourceFileContent -match '.*<Version>(\d+.\d+.\d+)</Version>.*'
 
 $old_vernum = $Matches[1]
+$old_vernum_full = "<Version>$old_vernum</Version>"
 
 $v = [version]$old_vernum
 write-host "v = $v"
@@ -42,8 +43,8 @@ else
 
 Write-Host "next version $new_version"
 $new_version_string = "$([string]::Join(".", $new_version))";
-
-$sourceFileContent -replace $old_vernum, $new_version_string  | Set-Content -Path .\Bottleneck.csproj -NoNewline
+$new_version_string_to_replace = "<Version>$new_version_string</Version>"
+$sourceFileContent -replace $old_vernum_full, $new_version_string_to_replace  | Set-Content -Path .\Bottleneck.csproj -NoNewline
 
 Import-Module -Name ".\Invoke-MsBuild.psm1"
 Invoke-MsBuild -Path ".\Bottleneck.csproj" -Params "/target:Clean;Build /property:Configuration=Release"
