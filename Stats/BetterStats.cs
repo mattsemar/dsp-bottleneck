@@ -621,9 +621,9 @@ namespace Bottleneck.Stats
                 RecordAssemblerStats(assembler, maxSpeedIncrease, maxProductivityIncrease);
             }
 
-            for (int i = 1; i < factorySystem.fractionateCursor; i++)
+            for (int i = 1; i < factorySystem.fractionatorCursor; i++)
             {
-                var fractionator = factorySystem.fractionatePool[i];
+                var fractionator = factorySystem.fractionatorPool[i];
                 RecordFractionatorStats(fractionator);
             }
 
@@ -785,7 +785,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordFractionatorStats(FractionateComponent fractionator)
+        public static void RecordFractionatorStats(FractionatorComponent fractionator)
         {
             if (fractionator.id < 1) return;
 

@@ -666,9 +666,9 @@ namespace Bottleneck
                 }
             }
 
-            for (int i = 1; i < factorySystem.fractionateCursor; i++)
+            for (int i = 1; i < factorySystem.fractionatorCursor; i++)
             {
-                var fractionator = factorySystem.fractionatePool[i];
+                var fractionator = factorySystem.fractionatorPool[i];
                 if (fractionator.id != i) continue;
                 if (_betterStatsObj != null && !planetUsage)
                     BetterStats.RecordFractionatorStats(fractionator);

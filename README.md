@@ -42,6 +42,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.7
+Update: update to sync with latest changes in game. 
+
 ### v1.0.6
 Bugfix: fix labs not detecting stacking condition 
 

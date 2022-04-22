@@ -1,10 +1,10 @@
 {
-  "name": "Bottleneck",
-  "version_number": "1.0.6",
-  "website_url": "https://github.com/mattsemar/dsp-bottleneck",
-  "description": "Adds production/consumption planet list to statistics panel. Also shows missing precursor items (aka bottlenecks) and supports filtering list by only precursor (or consumer) items",
-  "dependencies": [
-    "xiaoye97-BepInEx-5.4.5",
-    "CommonAPI-CommonAPI-1.2.0"
-  ]
+    "name":  "Bottleneck",
+    "version_number":  "1.0.7",
+    "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
+    "description":  "Adds production/consumption planet list to statistics panel. Also shows missing precursor items (aka bottlenecks) and supports filtering list by only precursor (or consumer) items",
+    "dependencies":  [
+                         "xiaoye97-BepInEx-5.4.5",
+                         "CommonAPI-CommonAPI-1.2.0"
+                     ]
 }
