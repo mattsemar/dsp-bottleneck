@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Bootstrap;
+using Bottleneck.Nebula;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
@@ -12,8 +13,10 @@ using UnityEngine.UI;
 namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
     public class BottleneckPlugin : BaseUnityPlugin
     {
+        public static BottleneckPlugin Instance => _instance;
         private Harmony _harmony;
         private static BottleneckPlugin _instance;
         private GameObject _enablePrecursorGO;
@@ -28,6 +31,7 @@ namespace Bottleneck
 
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
         private int _targetItemId = -1;
+        private static bool _successor;
         private bool _deficientOnlyMode;
         private GameObject _textGo;
         private Button _btn;
@@ -49,6 +53,12 @@ namespace Bottleneck
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
+
+            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer-api"))
+            {
+                NebulaCompat.Init(_harmony);
+            }
+
         }
 
         private void ConditionallyLoadStats()
@@ -87,13 +97,21 @@ namespace Bottleneck
                 _pendingMadeOnTask = null;
                 if (!_madeOnComputedSinceOpen)
                 {
-                    Log.Debug($"Processing madeOn task, age: {DateTime.Now - task.createdAt}");
-                    ProcessMadeOnTask(task);
-                    _madeOnComputedSinceOpen = true;
+                    var uiStatsWindow = task.statsWindow;
+                    if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
+                    {
+                        //Log.Debug("skipping madeon task due to window not being active");
+                    }
+                    else if (!NebulaCompat.IsClient)
+                    {
+                        Log.Debug($"Processing madeOn task, age: {DateTime.Now - task.createdAt}");
+                        ProcessMadeOnTask();
+                    }
+                    _madeOnComputedSinceOpen = true;                    
                 }
                 else
                 {
-                    Log.Debug("Skipping madeOn task since window has not been opened since last attempt");
+                    //Log.Debug("Skipping madeOn task since window has not been opened since last attempt");
                 }
             }
 
@@ -101,27 +119,20 @@ namespace Bottleneck
             {
                 var task = _pendingDeficitTask;
                 _pendingDeficitTask = null;
-                Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
+                //Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
                 ProcessDeficitTask(task);
                 _deficitComputedSinceOpen = true;
             }
         }
 
-        private void ProcessMadeOnTask(BottleneckTask task)
+        public void ProcessMadeOnTask()
         {
-            var uiStatsWindow = task.statsWindow;
-            if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
-            {
-                Log.Debug("skipping madeon task due to window not being active");
-                return;
-            }
-
             _productionLocations.Clear();
             _countedConsumers.Clear();
             _countedProducers.Clear();
-            for (int i = 0; i < uiStatsWindow.gameData.factoryCount; i++)
+            for (int i = 0; i < GameMain.data.factoryCount; i++)
             {
-                AddPlanetFactoryData(uiStatsWindow.gameData.factories[i], true);
+                AddPlanetFactoryData(GameMain.data.factories[i], true);
             }
 
             _enableMadeOn = true;
@@ -133,6 +144,13 @@ namespace Bottleneck
             if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
             {
                 Log.Debug("skipping deficit task due to window not being active");
+                return;
+            }
+
+            if (NebulaCompat.IsClient && uiStatsWindow.astroFilter != 0)
+            {
+                if (uiStatsWindow.astroFilter != NebulaCompat.LastAstroFilter)
+                    NebulaCompat.SendRequest(ERequest.Bottleneck);
                 return;
             }
 
@@ -152,7 +170,10 @@ namespace Bottleneck
             }
             else if (uiStatsWindow.astroFilter == 0)
             {
-                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+                if (uiStatsWindow.gameData.localPlanet.factory != null)
+                {
+                    AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+                }
             }
             else if (uiStatsWindow.astroFilter % 100 > 0)
             {
@@ -205,6 +226,9 @@ namespace Bottleneck
             {
                 Destroy(_betterStatsObj);
             }
+
+            NebulaCompat.OnDestroy();
+
         }
 
         private void Clear()
@@ -236,6 +260,8 @@ namespace Bottleneck
                 _instance.AddEnablePrecursorFilterButton(__instance);
                 _instance._madeOnComputedSinceOpen = false;
                 _instance._deficitComputedSinceOpen = false;
+                if (NebulaCompat.IsClient)
+                    NebulaCompat.SendRequest(ERequest.Open);
             }
         }
 
@@ -346,73 +372,85 @@ namespace Bottleneck
         {
             if (productEntry.productionStatWindow == null || !productEntry.productionStatWindow.isProductionTab) return;
 
-            if (!_uiElements.TryGetValue(productEntry, out BottleneckProductEntryElement elt))
-            {
-                elt = EnhanceElement(productEntry);
-            }
+            var elt = GetEnhanceElement(productEntry);
 
             if (elt.precursorButton != null && ButtonOutOfDate(elt.precursorButton, productEntry.entryData.itemId))
             {
-                var productId = productEntry.entryData.itemId;
-                elt.precursorButton.tips.tipTitle = "Production Details";
-                if (ItemUtil.HasPrecursors(productId))
-                {
-                    elt.precursorButton.tips.tipTitle += " (click to show only precursor items)";
-                }
-
-                if (_productionLocations.ContainsKey(productId))
-                {
-                    if (_enableMadeOn)
-                    {
-                        var parensMessage = ItemUtil.HasPrecursors(productId) ? "(Control click see only precursors that are lacking)\r\n" : "";
-                        elt.precursorButton.tips.tipText = $"{parensMessage}<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
-                        if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
-                        {
-                            elt.precursorButton.tips.tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
-                        }
-                    }
-                    else
-                    {
-                        elt.precursorButton.tips.tipText = "Production planets not shown when single planet selected";
-                    }
-
-                    var deficitItemName = ProductionDeficit.MostNeeded(productId);
-                    if (deficitItemName.Length > 0)
-                    {
-                        elt.precursorButton.tips.tipText += $"\r\n<b>Bottlenecks</b>\r\n{deficitItemName}";
-                    }
-                }
-                else
-                {
-                    elt.precursorButton.tips.tipText = "";
-                }
-
+                int productId = productEntry.entryData.itemId;
+                GetPrecursorButtonTip(productId, out elt.precursorButton.tips.tipTitle, out elt.precursorButton.tips.tipText);
                 UpdateButtonUpdateDate(elt.precursorButton, productId);
             }
 
             if (elt.successorButton != null && ButtonOutOfDate(elt.successorButton, productEntry.entryData.itemId))
             {
-                var productId = productEntry.entryData.itemId;
-                elt.successorButton.tips.tipTitle = "Consumption Details";
-                if (ItemUtil.HasConsumers(productId))
-                {
-                    elt.successorButton.tips.tipTitle += " (click to show only consuming items)";
-                }
+                int productId = productEntry.entryData.itemId;
+                GetSuccessorButtonTip(productId, out elt.successorButton.tips.tipTitle, out elt.successorButton.tips.tipText);
+                UpdateButtonUpdateDate(elt.successorButton, productId);
+            }
+        }
 
-                if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
+        public BottleneckProductEntryElement GetEnhanceElement(UIProductEntry productEntry)
+        {
+            if (!_uiElements.TryGetValue(productEntry, out BottleneckProductEntryElement elt))
+            {
+                elt = EnhanceElement(productEntry);
+            }
+            return elt;
+        }
+
+        public void GetPrecursorButtonTip(int productId, out string tipTitle, out string tipText)
+        {
+            tipTitle = "Production Details";
+            tipText = "";
+
+            if (NebulaCompat.IsClient)
+            {
+                tipText = "(Loading...)";
+                NebulaCompat.SendEntryRequest(productId, true);
+                return;
+            }
+
+            if (ItemUtil.HasPrecursors(productId))
+                tipTitle += " (click to show only precursor items)";
+            if (_productionLocations.ContainsKey(productId))
+            {
+                if (_enableMadeOn)
                 {
-                    elt.successorButton.tips.tipText = "<b>Consumed on</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
-                    if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
-                    {
-                        elt.successorButton.tips.tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].ConsumerPlanetCount()} planets)";
-                    }
+                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "(Control click see only precursors that are lacking)\r\n" : "";
+                    tipText = $"{parensMessage}<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
+                    if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
+                        tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
                 }
                 else
                 {
-                    elt.successorButton.tips.tipText = "";
+                    tipText = "Production planets not shown when single planet selected";
                 }
 
-                UpdateButtonUpdateDate(elt.successorButton, productId);
+                var deficitItemName = ProductionDeficit.MostNeeded(productId);
+                if (deficitItemName.Length > 0)
+                    tipText += $"\r\n<b>Bottlenecks</b>\r\n{deficitItemName}";
+            }
+        }
+
+        public void GetSuccessorButtonTip(int productId, out string tipTitle, out string tipText)
+        {
+            tipTitle = "Consumption Details";
+            tipText = "";
+
+            if (NebulaCompat.IsClient)
+            {
+                tipText = "(Loading...)";
+                NebulaCompat.SendEntryRequest(productId, false);
+                return;
+            }
+
+            if (ItemUtil.HasConsumers(productId))
+                tipTitle += " (click to show only consuming items)";
+            if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
+            {
+                tipText = "<b>Consumed on</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
+                if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
+                    tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].ConsumerPlanetCount()} planets)";
             }
         }
 
@@ -430,6 +468,8 @@ namespace Bottleneck
             {
                 if (itemAge.itemId != entryDataItemId)
                     return true;
+                if (NebulaCompat.IsClient)
+                    return false;
                 return (DateTime.Now - itemAge.lastUpdated).TotalSeconds > 4;
             }
 
@@ -444,6 +484,18 @@ namespace Bottleneck
         {
             _itemFilter.Clear();
             _targetItemId = -1;
+            SetFilterHighLight(-1, false);
+        }
+
+        private void SetFilterHighLight(int itemId, bool successor)
+        {
+            foreach (var pair in _uiElements)
+            {
+                if (pair.Value.precursorButton != null)
+                    pair.Value.precursorButton.highlighted = !successor && pair.Key.entryData?.itemId == itemId;
+                if (pair.Value.successorButton != null)
+                    pair.Value.successorButton.highlighted = successor && pair.Key.entryData?.itemId == itemId;
+            }
         }
 
         private BottleneckProductEntryElement EnhanceElement(UIProductEntry productEntry)
@@ -471,6 +523,7 @@ namespace Bottleneck
             _itemFilter.Clear();
             _itemFilter.Add(itemId);
             _targetItemId = itemId;
+            _successor = successor;
             _deficientOnlyMode = VFInput.control;
 
             if (!successor)
@@ -562,6 +615,7 @@ namespace Bottleneck
                     --uiProductEntryList.entryDatasCursor;
                 }
             }
+            SetFilterHighLight(_targetItemId, _successor);
         }
 
         private void AddEnablePrecursorFilterButton(UIStatisticsWindow uiStatisticsWindow)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Bottleneck.Nebula;
 using Bottleneck.Util;
 using UnityEngine;
 using UnityEngine.UI;
@@ -123,6 +124,8 @@ namespace Bottleneck.Stats
             setting.Enabled = true;
             setting.Mode = ItemCalculationMode.ForceProductivity;
             SyncButtons();
+            if (NebulaCompat.IsClient)
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnForceSpeedClicked(int itemId)
@@ -133,6 +136,8 @@ namespace Bottleneck.Stats
             setting.Mode = ItemCalculationMode.ForceSpeed;
 
             SyncButtons();
+            if (NebulaCompat.IsClient)
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnNormalClicked(int itemId)
@@ -140,6 +145,8 @@ namespace Bottleneck.Stats
             var setting = ItemCalculationRuntimeSetting.ForItemId(_productId);
             setting.Mode = ItemCalculationMode.Normal;
             SyncButtons();
+            if (NebulaCompat.IsClient)
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnModeDisable(int itemId)
@@ -153,6 +160,8 @@ namespace Bottleneck.Stats
             } // otherwise we'll just use whatever they had before disabling
 
             SyncButtons();
+            if (NebulaCompat.IsClient)
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void SyncButtons()
