@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BepInEx.Logging;
+using Bottleneck.Nebula;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -563,8 +564,16 @@ namespace Bottleneck.Stats
             {
                 return;
             }
-        
+
+            if (NebulaCompat.IsClient && __instance.astroFilter != 0)
+            {
+                if (__instance.astroFilter != NebulaCompat.LastAstroFilter)
+                    NebulaCompat.SendRequest(ERequest.BetterStats);
+                return;
+            }
+
             counter.Clear();
+
             if (__instance.astroFilter == -1)
             {
                 int factoryCount = __instance.gameData.factoryCount;
@@ -575,7 +584,10 @@ namespace Bottleneck.Stats
             }
             else if (__instance.astroFilter == 0)
             {
-                AddPlanetFactoryData(__instance.gameData.localPlanet.factory);
+                if (__instance.gameData.localPlanet.factory != null)
+                {
+                    AddPlanetFactoryData(__instance.gameData.localPlanet.factory);
+                }
             }
             else if (__instance.astroFilter % 100 > 0)
             {

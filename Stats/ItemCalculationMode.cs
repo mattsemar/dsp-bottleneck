@@ -144,6 +144,30 @@ namespace Bottleneck.Stats
             Pool[itemId]._configEntry = configEntry;
             return Pool[itemId];
         }
+
+        public static void OutputModes(out int[] productIds, out short[] modes)
+        {
+            int i = 0, num = Pool.Count;
+            productIds = new int[num];
+            modes = new short[num];
+            foreach (var pair in Pool)
+            {
+                productIds[i] = pair.Key;
+                modes[i] = (short)((pair.Value._enabled ? 1 : 0) + ((int)pair.Value._mode << 1));
+                i++;
+            }
+        }
+
+        public static void InputModes(in int[] productIds, in short[] modes)
+        {
+            int num = Pool.Count;
+            for (int i = 0; i < productIds.Length; i++)
+            {
+                int id = productIds[i];
+                Pool[id]._enabled = (modes[i] & 1) > 0;
+                Pool[id]._mode = ((ItemCalculationMode)(modes[i] >> 1));
+            }
+        }
     }
 
     [Serializable]
