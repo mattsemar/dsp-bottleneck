@@ -170,5 +170,14 @@ namespace Bottleneck
         {
             return _consumptionPlanetToConsumer.Count;
         }
+
+        public bool IsConsumerPlanet(string planet)
+        {
+            return _consumptionPlanetToConsumer.ContainsKey(planet);
+        }
+        public bool IsProducerPlanet(string planet)
+        {
+            return _productionPlanetToProducer.ContainsKey(planet);
+        }
     }
 }

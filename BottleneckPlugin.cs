@@ -58,7 +58,6 @@ namespace Bottleneck
             {
                 NebulaCompat.Init(_harmony);
             }
-
         }
 
         private void ConditionallyLoadStats()
@@ -107,7 +106,8 @@ namespace Bottleneck
                         Log.Debug($"Processing madeOn task, age: {DateTime.Now - task.createdAt}");
                         ProcessMadeOnTask();
                     }
-                    _madeOnComputedSinceOpen = true;                    
+
+                    _madeOnComputedSinceOpen = true;
                 }
                 else
                 {
@@ -228,7 +228,6 @@ namespace Bottleneck
             }
 
             NebulaCompat.OnDestroy();
-
         }
 
         private void Clear()
@@ -251,6 +250,69 @@ namespace Bottleneck
             _uiElements.Clear();
         }
 
+        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ValueToAstroBox)), HarmonyPriority(Priority.Last)]
+        public static void UIStatisticsWindow__ValueToAstroBox_Postfix(UIStatisticsWindow __instance)
+        {
+            if (!__instance.isStatisticsTab || NebulaCompat.IsClient)
+                return;
+
+            var instanceAstroBox = __instance.astroBox;
+            if (!__instance.isDysonTab && __instance.gameData.localPlanet != null)
+            {
+                int starId = __instance.gameData.localStar.id;
+                if (instanceAstroBox.Items[2] != "Local System")
+                {
+                    instanceAstroBox.Items.Insert(2, "Local System");
+                    instanceAstroBox.ItemsData.Insert(2, starId * 100);
+                }
+            }
+
+            if (_instance._itemFilter.Count == 0) return;
+
+            var newItems = new List<string>();
+            var newItemData = new List<int>();
+            for (int i = 0; i < instanceAstroBox.Items.Count; i++)
+            {
+                var astroId = instanceAstroBox.ItemsData[i];
+                if (astroId <= 0)
+                {
+                    // gotta keep
+                    newItemData.Add(astroId);
+                    newItems.Add(instanceAstroBox.Items[i]);
+                }
+                else if (astroId % 100 == 0)
+                {
+                    // hide star systems
+                }
+                else
+                {
+                    var planetData = GameMain.data.galaxy.PlanetById(astroId);
+                    if (planetData != null)
+                    {
+                        var locationSummary = _instance._productionLocations[_instance._targetItemId];
+                        if (locationSummary != null)
+                        {
+                            if ((_successor && locationSummary.IsConsumerPlanet(planetData.displayName))
+                                || (!_successor && locationSummary.IsProducerPlanet(planetData.displayName)))
+                            {
+                                // keep for now
+                                newItemData.Add(astroId);
+                                newItems.Add(instanceAstroBox.Items[i]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            lock (__instance.astroBox.Items)
+            {
+                __instance.astroBox.Items.Clear();
+                __instance.astroBox.ItemsData.Clear();
+                __instance.astroBox.Items.AddRange(newItems);
+                __instance.astroBox.ItemsData.AddRange(newItemData);
+            }
+        }
+        
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
@@ -395,6 +457,7 @@ namespace Bottleneck
             {
                 elt = EnhanceElement(productEntry);
             }
+
             return elt;
         }
 
@@ -484,6 +547,7 @@ namespace Bottleneck
         {
             _itemFilter.Clear();
             _targetItemId = -1;
+            UIRoot.instance.uiGame.statWindow.RefreshAstroBox();
             SetFilterHighLight(-1, false);
         }
 
@@ -542,7 +606,7 @@ namespace Bottleneck
                         foreach (var gpItem in grandParentItems)
                         {
                             _itemFilter.Add(gpItem);
-                        }       
+                        }
                     }
                 }
             }
@@ -553,6 +617,7 @@ namespace Bottleneck
                 {
                     _itemFilter.Add(successorItem);
                 }
+
                 if (_itemFilter.Count < 5)
                 {
                     foreach (var successorItem in successorItems)
@@ -561,10 +626,12 @@ namespace Bottleneck
                         foreach (var gcItem in grandChildItems)
                         {
                             _itemFilter.Add(gcItem);
-                        }       
+                        }
                     }
                 }
             }
+
+            UIRoot.instance.uiGame.statWindow.RefreshAstroBox();
 
             if (_betterStatsObj != null)
             {
@@ -615,6 +682,7 @@ namespace Bottleneck
                     --uiProductEntryList.entryDatasCursor;
                 }
             }
+
             SetFilterHighLight(_targetItemId, _successor);
         }
 

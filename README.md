@@ -42,6 +42,14 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.9
+* Update: Add support for Nebula (thanks starfi5h) 
+* Bugfix: Fix issue where Local System is added to astro list twice 
+
+### v1.0.8
+* Update: change so that when pre-cursor or successor filter is enabled, planet list is filtered to only planets that are producers or consumers of the item
+* Add "Local System" to planet dropdown
+
 ### v1.0.7
 Update: update to sync with latest changes in game. 
 
