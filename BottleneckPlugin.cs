@@ -255,9 +255,11 @@ namespace Bottleneck
         {
             if (!__instance.isStatisticsTab || NebulaCompat.IsClient)
                 return;
+            if (!PluginConfig.planetFilter.Value)
+                return;
 
             var instanceAstroBox = __instance.astroBox;
-            if (!__instance.isDysonTab && __instance.gameData.localPlanet != null)
+            if (!__instance.isDysonTab && __instance.gameData.localPlanet != null && instanceAstroBox.Items.Count > 2)
             {
                 int starId = __instance.gameData.localStar.id;
                 if (instanceAstroBox.Items[2] != "Local System")
@@ -271,6 +273,8 @@ namespace Bottleneck
 
             var newItems = new List<string>();
             var newItemData = new List<int>();
+            var currentSystemId = -1;
+            var currentSystemName = "";
             for (int i = 0; i < instanceAstroBox.Items.Count; i++)
             {
                 var astroId = instanceAstroBox.ItemsData[i];
@@ -282,7 +286,10 @@ namespace Bottleneck
                 }
                 else if (astroId % 100 == 0)
                 {
-                    // hide star systems
+                    // hide star systems, unless we get a hit for one of stars in system
+                    currentSystemId = astroId;
+                    var starName = UIRoot.instance.uiGame.statWindow.gameData.galaxy.StarById(astroId / 100).displayName;
+                    currentSystemName = starName + "空格行星系".Translate();
                 }
                 else
                 {
@@ -295,7 +302,13 @@ namespace Bottleneck
                             if ((_successor && locationSummary.IsConsumerPlanet(planetData.displayName))
                                 || (!_successor && locationSummary.IsProducerPlanet(planetData.displayName)))
                             {
-                                // keep for now
+                                // keep, but first add system
+                                if (currentSystemId > 0 && PluginConfig.systemFilter.Value)
+                                {
+                                    newItemData.Add(currentSystemId);
+                                    newItems.Add(currentSystemName);
+                                    currentSystemId = -1;
+                                }
                                 newItemData.Add(astroId);
                                 newItems.Add(instanceAstroBox.Items[i]);
                             }
@@ -598,7 +611,7 @@ namespace Bottleneck
                     _itemFilter.Add(directPrecursorItem);
                 }
 
-                if (_itemFilter.Count < 5)
+                if (PluginConfig.includeSecondLevelConsumerProducer.Value)
                 {
                     foreach (var directPrecursorItem in directPrecursorItems)
                     {
@@ -618,7 +631,7 @@ namespace Bottleneck
                     _itemFilter.Add(successorItem);
                 }
 
-                if (_itemFilter.Count < 5)
+                if (PluginConfig.includeSecondLevelConsumerProducer.Value)
                 {
                     foreach (var successorItem in successorItems)
                     {

@@ -27,6 +27,9 @@ For production items that can be proliferated, buttons are added next to each it
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
 * 'Disable Bottleneck' lets you disable the Bottleneck functionality of this mod and just focus on stats
 * 'Disable Proliferator Calculation' removes Proliferator from Theoretical max calculations completely
+* 'Planet Filter' removes non-production (or non-consumption) planets from list when a precursor/consumer item filter is active
+* 'System Filter' when Planet Filter is active add a "Star System" item the list for system with producers  
+* 'Include Second Level Items' when a precursor/consumer item filter is active also include grandparent / grandchild precursor/consumer   
 
 ## Notes
 This mod was originally planned as an enhancement to BetterStats by brokenmass.
@@ -41,6 +44,11 @@ For now installation is only supported through a mod manager, but, in general th
 * xiaoye97-LDBTool
 
 ## Changelog
+
+### v1.0.10 
+* Bugfix: Fix bug with planet filtering when matched planet count is smaller than 2 
+* Update: Add config property to disable filtering of planet list by precursor/consumer target
+* Update: Add config property to control whether 2nd level precursor/consumers are shown
 
 ### v1.0.9
 * Update: Add support for Nebula (thanks starfi5h) 

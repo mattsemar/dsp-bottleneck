@@ -12,6 +12,9 @@ namespace Bottleneck
         public static ConfigEntry<bool> disableProliferatorCalc;
         public static ConfigEntry<bool> disableStackingCalc;
         public static ConfigEntry<bool> statsOnly;
+        public static ConfigEntry<bool> planetFilter;
+        public static ConfigEntry<bool> systemFilter;
+        public static ConfigEntry<bool> includeSecondLevelConsumerProducer;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -19,8 +22,13 @@ namespace Bottleneck
             productionPlanetCount = confFile.Bind("General", "ProductionPlanetCount", 5, new ConfigDescription(
                 "Number of production planets to show. Too many and tip gets very large",
                 new AcceptableValueRange<int>(2, 35)));
+            includeSecondLevelConsumerProducer = confFile.Bind("General", "Include Second Level Items", true, 
+                "Disable to show only the direct consumers or producers. When enabled one extra level of consumer/producer will be included in results");
             popupLowPowerWarnings = confFile.Bind("General", "PopupLowPowerWarnings", true, "When planets with too little power are detected a message will be popped up (once per session)");
-            
+            planetFilter = confFile.Bind("General", "Planet Filter", true,
+                "When precursor/consumer filter is active filter planet list to only ones that produce/consume selected item");            
+            systemFilter = confFile.Bind("General", "System Filter", true,
+                "When planet filter is active include star systems item in list (requires Planet Filter enabled)");            
             lackOfProductionRatioTrigger = confFile.Bind("General", "lackOfProductionRatio", 0.9f, //
                 "When consumption rises above the given ratio of max production, flag the text in red." +//
                 " (e.g. if set to '0.9' then you will be warned if you consume more than 90% of your max production)");
