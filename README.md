@@ -45,6 +45,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.11 
+* Update: add item tooltip when item icon is hovered in stats window (disable with "Disable Item Hover Tip" config property) 
+
 ### v1.0.10 
 * Bugfix: Fix bug with planet filtering when matched planet count is smaller than 2 
 * Update: Add config property to disable filtering of planet list by precursor/consumer target

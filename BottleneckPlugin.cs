@@ -325,7 +325,15 @@ namespace Bottleneck
                 __instance.astroBox.ItemsData.AddRange(newItemData);
             }
         }
-        
+
+        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Last)]
+        public static void UIStatisticsWindow__OnClose_Postfix(UIStatisticsWindow __instance)
+        {
+            if (_instance == null)
+                return;
+            if (_instance._betterStatsObj != null)
+                BetterStats.UIStatisticsWindow__OnClose_Postfix(__instance);
+        }
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
@@ -357,7 +365,7 @@ namespace Bottleneck
         }
 
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnUpdate")]
+        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnUpdate))]
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
         {
             if (_instance == null)

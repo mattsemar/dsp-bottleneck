@@ -15,6 +15,7 @@ namespace Bottleneck
         public static ConfigEntry<bool> planetFilter;
         public static ConfigEntry<bool> systemFilter;
         public static ConfigEntry<bool> includeSecondLevelConsumerProducer;
+        public static ConfigEntry<bool> disableItemHoverTip;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -24,6 +25,8 @@ namespace Bottleneck
                 new AcceptableValueRange<int>(2, 35)));
             includeSecondLevelConsumerProducer = confFile.Bind("General", "Include Second Level Items", true, 
                 "Disable to show only the direct consumers or producers. When enabled one extra level of consumer/producer will be included in results");
+            disableItemHoverTip = confFile.Bind("General", "Disable Item Hover Tip", false, 
+                "Suppress item tooltip in stats window");
             popupLowPowerWarnings = confFile.Bind("General", "PopupLowPowerWarnings", true, "When planets with too little power are detected a message will be popped up (once per session)");
             planetFilter = confFile.Bind("General", "Planet Filter", true,
                 "When precursor/consumer filter is active filter planet list to only ones that produce/consume selected item");            

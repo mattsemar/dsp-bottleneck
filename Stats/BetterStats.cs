@@ -14,6 +14,8 @@ namespace Bottleneck.Stats
     {
         private class EnhancedUIProductEntryElements
         {
+            public int itemId;
+            private int tipItemId;
             public Text maxProductionLabel;
             public Text maxProductionValue;
             public Text maxProductionUnit;
@@ -28,6 +30,45 @@ namespace Bottleneck.Stats
             public Text counterConsumptionLabel;
             public Text counterConsumptionValue;
             public ProliferatorOperationSetting proliferatorOperationSetting;
+            public EventTrigger trigger;
+            public UIProductEntry productEntry { get; set; }
+
+            public UIItemTip tip;
+
+            public void OnMouseOverItem(BaseEventData arg)
+            {
+                if (PluginConfig.disableItemHoverTip.Value)
+                    return;
+                if (productEntry == null)
+                    return;
+                if (tip != null)
+                {
+                    if (tipItemId != itemId)
+                    {
+                        Destroy(tip.gameObject);
+                        tip = null;
+                    }
+                    else
+                    {
+                        tip.gameObject.SetActive(true);
+                        return;
+                    }
+                }
+
+                tip = UIItemTip.Create(itemId, 6, new Vector2(600, 0), this.productEntry.itemIcon.gameObject.transform,
+                    0, 0, UIButton.ItemTipType.Item, true, true, false, false);
+                tipItemId = itemId;
+            }
+
+            public void OnMouseOffItem(BaseEventData arg)
+            {
+                if (tip != null)
+                {
+                    Destroy(tip.gameObject);
+                    tip = null;
+                    tipItemId = -1;
+                }
+            }
         }
 
         public static Dictionary<int, ProductMetrics> counter = new();
@@ -49,7 +90,7 @@ namespace Bottleneck.Stats
 
         private static int lastStatTimer;
 
-        private static Dictionary<UIProductEntry, EnhancedUIProductEntryElements> enhancements = new Dictionary<UIProductEntry, EnhancedUIProductEntryElements>();
+        private static Dictionary<UIProductEntry, EnhancedUIProductEntryElements> enhancements = new();
         private static UIStatisticsWindow statWindow;
         public static ManualLogSource Log;
 
@@ -114,6 +155,7 @@ namespace Bottleneck.Stats
 
                 Destroy(enhancement.counterConsumptionLabel.gameObject);
                 Destroy(enhancement.counterConsumptionValue.gameObject);
+                enhancement.trigger.triggers.Clear();
             }
 
             enhancements.Clear();
@@ -282,6 +324,7 @@ namespace Bottleneck.Stats
             var proliferatorOpSetting = ProliferatorOperationSetting.ForProductEntry(__instance);
             var enhancement = new EnhancedUIProductEntryElements
             {
+                itemId = __instance.entryData.itemId,
                 maxProductionLabel = maxProductionLabel,
                 maxProductionValue = maxProductionValue,
                 maxProductionUnit = maxProductionUnit,
@@ -295,8 +338,25 @@ namespace Bottleneck.Stats
 
                 counterConsumptionLabel = counterConsumptionLabel,
                 counterConsumptionValue = counterConsumptionValue,
-                proliferatorOperationSetting = proliferatorOpSetting
+                proliferatorOperationSetting = proliferatorOpSetting,
+                productEntry = __instance,
             };
+
+            __instance.itemIcon.raycastTarget = true;
+            enhancement.trigger = __instance.itemIcon.gameObject.AddComponent<EventTrigger>();
+            // var eventRectTrigger = eventTriggerItem.GetComponent<RectTransform>();
+            // // eventRectTrigger.anchoredPosition = __instance.itemIcon.transform.position;
+            // // eventRectTrigger.sizeDelta = new Vector2(100, 100);
+
+            EventTrigger.Entry enter = new EventTrigger.Entry();
+            enter.eventID = EventTriggerType.PointerEnter;
+            enter.callback.AddListener(enhancement.OnMouseOverItem);
+            enhancement.trigger.triggers.Add(enter);
+
+            EventTrigger.Entry exit = new EventTrigger.Entry();
+            exit.eventID = EventTriggerType.PointerExit;
+            exit.callback.AddListener(enhancement.OnMouseOffItem);
+            enhancement.trigger.triggers.Add(exit);
 
             enhancements.Add(__instance, enhancement);
 
@@ -478,6 +538,8 @@ namespace Bottleneck.Stats
             {
                 enhancement = EnhanceUIProductEntry(__instance);
             }
+
+            enhancement.itemId = __instance.entryData.itemId;
 
             bool isTotalTimeWindow = __instance.productionStatWindow.timeLevel == 5;
 
@@ -1005,6 +1067,14 @@ namespace Bottleneck.Stats
             }
 
             return (baseFrequency, productionFrequency);
+        }
+
+        public static void UIStatisticsWindow__OnClose_Postfix(UIStatisticsWindow uiStatisticsWindow)
+        {
+            foreach (var element in enhancements.Values)
+            {
+                element.OnMouseOffItem(null);
+            }
         }
     }
 }
