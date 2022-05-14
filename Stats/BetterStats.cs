@@ -55,8 +55,10 @@ namespace Bottleneck.Stats
                     }
                 }
 
-                tip = UIItemTip.Create(itemId, 6, new Vector2(600, 0), this.productEntry.itemIcon.gameObject.transform,
-                    0, 0, UIButton.ItemTipType.Item, true, true, false, false);
+                // corner=9 is ABOVE_RIGHT, according to this idiot: https://github.com/mattsemar/dsp-personal-logistics/blob/25bba06c7127516f1897c9e76ef8a77342933d7d/UI/UINetworkStatusTip.cs#L19
+                tip = UIItemTip.Create(itemId, 9, Vector2.zero, 
+                    productEntry.itemIcon.transform,
+                    0, 0, UIButton.ItemTipType.Other);
                 tipItemId = itemId;
             }
 
