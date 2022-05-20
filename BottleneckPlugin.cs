@@ -756,6 +756,7 @@ namespace Bottleneck
 
         public void AddPlanetFactoryData(PlanetFactory planetFactory, bool planetUsage)
         {
+            int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
             var factorySystem = planetFactory.factorySystem;
             var veinPool = planetFactory.planet.factory.veinPool;
             for (int i = 1; i < factorySystem.minerCursor; i++)
@@ -814,7 +815,7 @@ namespace Bottleneck
                 var fractionator = factorySystem.fractionatorPool[i];
                 if (fractionator.id != i) continue;
                 if (_betterStatsObj != null && !planetUsage)
-                    BetterStats.RecordFractionatorStats(fractionator);
+                    BetterStats.RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
                 if (!planetUsage)
                     continue;
                 if (fractionator.fluidId != 0)

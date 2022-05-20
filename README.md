@@ -45,6 +45,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.13 
+* Update: change fractionator theoretical max calculation to account for stacked belts & spray 
+
 ### v1.0.12 
 * Update: adjust item tooltip to get rid of cannot craft in replicator message 
 

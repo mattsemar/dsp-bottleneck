@@ -684,7 +684,7 @@ namespace Bottleneck.Stats
             var veinPool = planetFactory.planet.factory.veinPool;
             var maxProductivityIncrease = ResearchTechHelper.GetMaxProductivityIncrease();
             var maxSpeedIncrease = ResearchTechHelper.GetMaxSpeedIncrease();
-
+            int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
                 var miner = factorySystem.minerPool[i];
@@ -700,7 +700,7 @@ namespace Bottleneck.Stats
             for (int i = 1; i < factorySystem.fractionatorCursor; i++)
             {
                 var fractionator = factorySystem.fractionatorPool[i];
-                RecordFractionatorStats(fractionator);
+                RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
             }
 
             for (int i = 1; i < factorySystem.ejectorCursor; i++)
@@ -861,16 +861,29 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordFractionatorStats(FractionatorComponent fractionator)
+        public static void RecordFractionatorStats(FractionatorComponent fractionator, float maxSpeedIncrease, int beltMaxStack)
         {
             if (fractionator.id < 1) return;
+            var speed = 30f;
+            if (fractionator.fluidInputCargoCount * 2 > fractionator.fluidInputCount)
+            {
+                // for whatever reason the belt doesn't have a stacked input so discount back to 30 cargo / s rate 
+                beltMaxStack = 1;
+            }
+            var runtimeSetting =
+                PluginConfig.disableProliferatorCalc.Value ? ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(115);
+
+            if (runtimeSetting.Enabled)
+            {
+                speed += maxSpeedIncrease * speed;
+            }
 
             if (fractionator.fluidId != 0)
             {
                 var productId = fractionator.fluidId;
                 EnsureId(ref counter, productId);
 
-                counter[productId].consumption += 60f * 30f * fractionator.produceProb;
+                counter[productId].consumption += 60f * speed * fractionator.produceProb * beltMaxStack;
                 counter[productId].consumers++;
             }
 
@@ -878,8 +891,7 @@ namespace Bottleneck.Stats
             {
                 var productId = fractionator.productId;
                 EnsureId(ref counter, productId);
-
-                counter[productId].production += 60f * 30f * fractionator.produceProb;
+                counter[productId].production += 60f * speed * fractionator.produceProb * beltMaxStack;
                 counter[productId].producers++;
             }
         }
