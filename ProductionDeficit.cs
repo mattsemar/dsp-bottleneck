@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Bottleneck.Stats;
+using Bottleneck.UI;
 using Bottleneck.Util;
 
 namespace Bottleneck
@@ -156,7 +157,7 @@ namespace Bottleneck
                     for (int i = 0; i < value.neededCount; i++)
                     {
                         var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                        value.inputItemNames[i] = requiredItem.Name.Translate();
+                        value.inputItemNames[i] = requiredItem.Name.Translate(Localization.language);
                         value.inputItemId[i] = requiredItem.ID;
                         value.inputItemIndex[assemblerComponent.requires[i]] = i;
                     }
@@ -182,12 +183,12 @@ namespace Bottleneck
                 value = new ProductionDeficitItem
                 {
                     neededCount = assemblerComponent.requires.Length,
-                    recipeName = LDB.recipes.Select(recipeId).Name.Translate()
+                    recipeName = LDB.recipes.Select(recipeId).Name.Translate(Localization.language)
                 };
                 for (int i = 0; i < value.neededCount; i++)
                 {
                     var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                    value.inputItemNames[i] = requiredItem.Name.Translate();
+                    value.inputItemNames[i] = requiredItem.Name.Translate(Localization.language);
                     value.inputItemId[i] = requiredItem.ID;
                     value.inputItemIndex[assemblerComponent.requires[i]] = i;
                 }
@@ -258,29 +259,29 @@ namespace Bottleneck
                 var tmpResultStr = new StringBuilder();
                 if (neededStr.Length > 0)
                 {
-                    tmpResultStr.Append($"Need: {neededStr}");
+                    tmpResultStr.Append($"{Strings.NeedLabel}: {neededStr}");
                     if (stackingStr.Length > 0)
-                        tmpResultStr.Append($", Stacking: {stackingStr}");
+                        tmpResultStr.Append($", {Strings.StackingLabel}: {stackingStr}");
                     if (unpoweredStr.Length > 0)
-                        tmpResultStr.Append($", Under powered: {unpoweredStr}");
+                        tmpResultStr.Append($", {Strings.UnderPoweredLabel}: {unpoweredStr}");
                     if (unsprayedStr.Length > 0)
-                        tmpResultStr.Append($", Missing spray: {unsprayedStr}");
+                        tmpResultStr.Append($", {Strings.MissingSprayLabel}: {unsprayedStr}");
                 }
                 else if (stackingStr.Length > 0)
                 {
-                    tmpResultStr.Append($"Stacking: {stackingStr}");
+                    tmpResultStr.Append($"{Strings.StackingLabel}: {stackingStr}");
                     if (unpoweredStr.Length > 0)
-                        tmpResultStr.Append($", Under powered: {unpoweredStr}");
+                        tmpResultStr.Append($", {Strings.UnderPoweredLabel}: {unpoweredStr}");
                     if (unsprayedStr.Length > 0)
-                        tmpResultStr.Append($", Missing spray: {unsprayedStr}");
+                        tmpResultStr.Append($", {Strings.MissingSprayLabel}: {unsprayedStr}");
                 }
                 else if (unpoweredStr.Length > 0)
                 {
-                    tmpResultStr.Append($"Under powered: {unpoweredStr}");
+                    tmpResultStr.Append($"{Strings.UnderPoweredLabel}: {unpoweredStr}");
                 }
                 else
                 {
-                    tmpResultStr.Append($"Missing spray: {unsprayedStr}");
+                    tmpResultStr.Append($"{Strings.MissingSprayLabel}: {unsprayedStr}");
                 }
 
                 if (productionDeficitItems.Count > 1)
