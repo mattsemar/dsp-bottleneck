@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Bottleneck.Nebula;
+using Bottleneck.UI;
 using Bottleneck.Util;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,12 +14,6 @@ namespace Bottleneck.Stats
     /// </summary>
     public class ProliferatorOperationSetting
     {
-        private const string PROLIFERATOR_POINT_CALCULATION_DISABLED = "Proliferator Calculation Disabled";
-        private const string PROLIFERATOR_POINT_CALCULATION_ENABLE = "Proliferator Calculation Enabled";
-        private const string ASSEMBLER_SELECTION_MODE = "Assembler Selection Mode";
-        private const string FORCE_PRODUCTIVITY_MODE = "Force Productivity Mode";
-        private const string FORCE_SPEED_MODE = "Force Speed Mode";
-
         private UIButton _normalOperationButton;
         private UIButton _disableButton;
         private UIButton _forceSpeedButton;
@@ -93,26 +88,26 @@ namespace Bottleneck.Stats
 
             result._disableButton = CopyButton(uiProductEntry, sourceButton, new Vector2(xOffset, 85),
                 result.OnModeDisable, itemId, checkboxOnSprite,
-                PROLIFERATOR_POINT_CALCULATION_DISABLED,
-                "Don't use Proliferator Points for calculation of Theoretical max values");
+                Strings.ProliferatorCalculationDisabled,
+                Strings.ProliferatorCalculationDisabledHover);
             result._availableButtons.Add(result._disableButton);
 
             result._normalOperationButton = CopyButton(uiProductEntry, sourceButton, new Vector2(xOffset, 60),
                 result.OnNormalClicked, itemId, OperationModeSprites[ItemCalculationMode.Normal],
-                ASSEMBLER_SELECTION_MODE,
-                "Max values calculated using currently selected mode for each assembler.");
+                Strings.AssemblerSelectionMode,
+                Strings.AssemblerSelectionHover);
             result._availableButtons.Add(result._normalOperationButton);
 
             result._forceSpeedButton = CopyButton(uiProductEntry, sourceButton, new Vector2(xOffset, 35),
                 result.OnForceSpeedClicked, itemId, OperationModeSprites[ItemCalculationMode.ForceSpeed],
-                FORCE_SPEED_MODE,
-                "Max values calculated as if all all assemblers were set to 'Production Speedup'.");
+                Strings.ForceSpeedMode,
+                Strings.ForceSpeedModeHover);
             result._availableButtons.Add(result._forceSpeedButton);
 
             result._forceProductivityButton = CopyButton(uiProductEntry, sourceButton, new Vector2(xOffset, 10),
                 result.OnForceProductivity, itemId, OperationModeSprites[ItemCalculationMode.ForceProductivity],
-                FORCE_PRODUCTIVITY_MODE,
-                "Max values calculated as if all all assemblers were set to 'Extra Products'.");
+                Strings.ForceProductivityMode,
+                Strings.ForceProductivityHover);
             result._availableButtons.Add(result._forceProductivityButton);
             result.SyncButtons();
             return result;
@@ -172,12 +167,12 @@ namespace Bottleneck.Stats
 
             if (!runtimeSetting.Enabled)
             {
-                _disableButton.tips.tipTitle = $"{PROLIFERATOR_POINT_CALCULATION_DISABLED}";
+                _disableButton.tips.tipTitle = Strings.ProliferatorCalculationDisabled;
                 _disableButton.button.image.sprite = checkboxOffSprite;
             }
             else
             {
-                _disableButton.tips.tipTitle = $"{PROLIFERATOR_POINT_CALCULATION_ENABLE}";
+                _disableButton.tips.tipTitle = Strings.ProliferatorCalculationEnabled;
                 _disableButton.button.image.sprite = checkboxOnSprite;
             }
 
@@ -197,19 +192,19 @@ namespace Bottleneck.Stats
             {
                 case ItemCalculationMode.Normal:
                 {
-                    _normalOperationButton.tips.tipTitle = $"(current) {ASSEMBLER_SELECTION_MODE}";
+                    _normalOperationButton.tips.tipTitle = $"({Strings.CurrentLabel}) {Strings.AssemblerSelectionMode}";
                     _normalOperationButton.highlighted = true;
                     break;
                 }
                 case ItemCalculationMode.ForceProductivity:
                 {
-                    _forceProductivityButton.tips.tipTitle = $"(current) {FORCE_PRODUCTIVITY_MODE}";
+                    _forceProductivityButton.tips.tipTitle = $"({Strings.CurrentLabel}) {Strings.ForceProductivityMode}";
                     _forceProductivityButton.highlighted = true;
                     break;
                 }
                 case ItemCalculationMode.ForceSpeed:
                 {
-                    _forceSpeedButton.tips.tipTitle = $"(current) {FORCE_SPEED_MODE}";
+                    _forceSpeedButton.tips.tipTitle = $"({Strings.CurrentLabel}) {Strings.ForceSpeedMode}";
                     _forceSpeedButton.highlighted = true;
                     break;
                 }
@@ -230,7 +225,7 @@ namespace Bottleneck.Stats
 
             if (_forceProductivityButton != null)
             {
-                _forceProductivityButton.tips.tipTitle = FORCE_PRODUCTIVITY_MODE;
+                _forceProductivityButton.tips.tipTitle = Strings.ForceProductivityMode;
                 _forceProductivityButton.highlighted = false;
                 _forceProductivityButton.button.interactable = true;
                 _forceProductivityButton.gameObject.SetActive(runtimeSetting.ProductivitySupported);
@@ -238,7 +233,7 @@ namespace Bottleneck.Stats
 
             if (_forceSpeedButton != null)
             {
-                _forceSpeedButton.tips.tipTitle = FORCE_SPEED_MODE;
+                _forceSpeedButton.tips.tipTitle = Strings.ForceSpeedMode;
                 _forceSpeedButton.highlighted = false;
                 _forceSpeedButton.button.interactable = true;
                 _forceSpeedButton.gameObject.SetActive(runtimeSetting.SpeedSupported);
@@ -246,7 +241,7 @@ namespace Bottleneck.Stats
 
             if (_disableButton != null)
             {
-                _disableButton.tips.tipTitle = PROLIFERATOR_POINT_CALCULATION_DISABLED;
+                _disableButton.tips.tipTitle = Strings.ProliferatorCalculationDisabled;
                 _disableButton.highlighted = true;
                 _disableButton.button.interactable = true;
                 _disableButton.gameObject.SetActive(true);
@@ -254,7 +249,7 @@ namespace Bottleneck.Stats
 
             if (_normalOperationButton != null)
             {
-                _normalOperationButton.tips.tipTitle = ASSEMBLER_SELECTION_MODE;
+                _normalOperationButton.tips.tipTitle = Strings.AssemblerSelectionMode;
                 _normalOperationButton.highlighted = false;
                 _normalOperationButton.button.interactable = true;
                 _normalOperationButton.gameObject.SetActive(true);

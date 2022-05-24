@@ -6,6 +6,8 @@ using Bottleneck.Nebula;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
+using CommonAPI;
+using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +16,8 @@ namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(CommonAPIPlugin.GUID)]
+    [CommonAPISubmoduleDependency(nameof(ProtoRegistry))]
     public class BottleneckPlugin : BaseUnityPlugin
     {
         public static BottleneckPlugin Instance => _instance;
@@ -49,6 +53,10 @@ namespace Bottleneck
         {
             Log.logger = Logger;
             _instance = this;
+            using (ProtoRegistry.StartModLoad(PluginInfo.PLUGIN_GUID))
+            {
+                Strings.Init();
+            }
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
@@ -262,9 +270,9 @@ namespace Bottleneck
             if (!__instance.isDysonTab && __instance.gameData.localPlanet != null && instanceAstroBox.Items.Count > 2)
             {
                 int starId = __instance.gameData.localStar.id;
-                if (instanceAstroBox.Items[2] != "Local System")
+                if (instanceAstroBox.Items[2] != "localSystemLabel".Translate(Localization.language))
                 {
-                    instanceAstroBox.Items.Insert(2, "Local System");
+                    instanceAstroBox.Items.Insert(2, "localSystemLabel".Translate(Localization.language));
                     instanceAstroBox.ItemsData.Insert(2, starId * 100);
                 }
             }
@@ -289,7 +297,7 @@ namespace Bottleneck
                     // hide star systems, unless we get a hit for one of stars in system
                     currentSystemId = astroId;
                     var starName = UIRoot.instance.uiGame.statWindow.gameData.galaxy.StarById(astroId / 100).displayName;
-                    currentSystemName = starName + "空格行星系".Translate();
+                    currentSystemName = starName + "空格行星系".Translate(Localization.language);
                 }
                 else
                 {
@@ -332,7 +340,7 @@ namespace Bottleneck
             if (_instance == null)
                 return;
             if (_instance._betterStatsObj != null)
-                BetterStats.UIStatisticsWindow__OnClose_Postfix(__instance);
+                BetterStats.UIStatisticsWindow__OnClose_Postfix();
         }
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
@@ -484,24 +492,25 @@ namespace Bottleneck
 
         public void GetPrecursorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "Production Details";
+            tipTitle = "prodDetailsLabel".Translate(Localization.language);
             tipText = "";
 
             if (NebulaCompat.IsClient)
             {
-                tipText = "(Loading...)";
+                tipText = "(...)";
                 NebulaCompat.SendEntryRequest(productId, true);
                 return;
             }
 
             if (ItemUtil.HasPrecursors(productId))
-                tipTitle += " (click to show only precursor items)";
+                tipTitle += "clickPrecursorText".Translate(Localization.language);
             if (_productionLocations.ContainsKey(productId))
             {
                 if (_enableMadeOn)
                 {
-                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "(Control click see only precursors that are lacking)\r\n" : "";
-                    tipText = $"{parensMessage}<b>Produced on</b>\r\n" + _productionLocations[productId].GetProducerSummary();
+                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "controlClickLacking".Translate(Localization.language) : "";
+                    var producedOnText = "producedOnLabel".Translate(Localization.language);
+                    tipText = $"{parensMessage}<b>{producedOnText}</b>\r\n" + _productionLocations[productId].GetProducerSummary();
                     if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
                 }
@@ -512,27 +521,29 @@ namespace Bottleneck
 
                 var deficitItemName = ProductionDeficit.MostNeeded(productId);
                 if (deficitItemName.Length > 0)
-                    tipText += $"\r\n<b>Bottlenecks</b>\r\n{deficitItemName}";
+                    tipText += $"\r\n<b>{Strings.BottlenecksLabel}</b>\r\n{deficitItemName}";
             }
         }
 
         public void GetSuccessorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "Consumption Details";
+            tipTitle = "conDetailsLabel".Translate(Localization.language);
             tipText = "";
 
             if (NebulaCompat.IsClient)
             {
-                tipText = "(Loading...)";
+                tipText = "(...)";
                 NebulaCompat.SendEntryRequest(productId, false);
                 return;
             }
 
             if (ItemUtil.HasConsumers(productId))
-                tipTitle += " (click to show only consuming items)";
+                tipTitle += "clickConsumingText".Translate(Localization.language);
             if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
-            {
-                tipText = "<b>Consumed on</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
+            { 
+                var consumedOnText = "consumedOnLabel".Translate(Localization.language);
+
+                tipText = $"<b>{consumedOnText}</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
                 if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
                     tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].ConsumerPlanetCount()} planets)";
             }
@@ -742,7 +753,7 @@ namespace Bottleneck
             rectTxt.anchoredPosition = new Vector2(20, 0);
             objsToDestroy.Add(rectTxt.gameObject);
             Text text = rectTxt.gameObject.AddComponent<Text>();
-            text.text = "Clear filter";
+            text.text = "clearFilterLabel".Translate(Localization.language);
             text.fontStyle = FontStyle.Normal;
             text.fontSize = 12;
             text.verticalOverflow = VerticalWrapMode.Overflow;
