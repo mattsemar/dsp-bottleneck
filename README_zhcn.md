@@ -1,12 +1,10 @@
 # Bottleneck
 
-_Note: A Chinese translation of this readme can be found [here](https://github.com/mattsemar/dsp-bottleneck/blob/master/README_zhcn.md?raw=true)_
-
 This mod adds some information to the stats panel to help find production bottlenecks. It will show the top 5 (configurable) planets an item is made on
 and also try to assess what your assemblers are stuck on (needing items, no power, stacking). It also adds some filter buttons for limiting the items shown to 
 only the precursor (or dependent) items to narrow down the search for bottlenecks
 
-![Example](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/screenshot.png?raw=true)
+![Example](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/screenshot_cn.png?raw=true)
 
 ## BetterStats with Proliferator
 
