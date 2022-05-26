@@ -1,4 +1,6 @@
-﻿using BepInEx.Configuration;
+﻿using System;
+using System.Linq;
+using BepInEx.Configuration;
 
 namespace Bottleneck
 {
@@ -16,6 +18,7 @@ namespace Bottleneck
         public static ConfigEntry<bool> systemFilter;
         public static ConfigEntry<bool> includeSecondLevelConsumerProducer;
         public static ConfigEntry<bool> disableItemHoverTip;
+        private static ConfigEntry<string> testOverrideLanguage;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -46,6 +49,28 @@ namespace Bottleneck
                 "Tells mod to ignore unlocked tech for stacking items on belts. By default uses same 'Tech Limit' value as stations use");
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
+            var languages = Enum.GetNames(typeof(Language)).ToList().FindAll(l => l.ToString().Length == 4);
+            languages.Add("");
+            testOverrideLanguage = confFile.Bind("Internal", "TEST override language", "",
+                new ConfigDescription("Force an alt language to be used (for some text)",
+                    new AcceptableValueList<string>(
+                        languages.ToArray()
+                    )));
+            // force this setting to empty so that it has to be set at runtime and can't be left on by accident
+            testOverrideLanguage.Value = "";
+        }
+
+        public static Language GetLanguage()
+        {
+            if (testOverrideLanguage.Value.Length > 0)
+            {
+                if (Enum.TryParse(testOverrideLanguage.Value, true, out Language newLang))
+                {
+                    return newLang;
+                }
+
+            } 
+            return Localization.language;
         }
     }
 }

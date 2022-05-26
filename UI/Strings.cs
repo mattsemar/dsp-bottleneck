@@ -33,7 +33,7 @@ namespace Bottleneck.UI
             ProtoRegistry.RegisterString("needLabel", "Need", "需要");
             ProtoRegistry.RegisterString("currentLabel", "current", "当前");
             ProtoRegistry.RegisterString("stackingLabel", "Stacking", "产物堆积");
-            ProtoRegistry.RegisterString("underPoweredLabel", "UnderPowered", "电力不足");
+            ProtoRegistry.RegisterString("underPoweredLabel", "Under Powered", "电力不足");
             ProtoRegistry.RegisterString("missingSprayLabel", "Missing spray", "缺少增产剂");
             ProtoRegistry.RegisterString("bottlenecksLabel", "Bottlenecks", "瓶颈");
             // text used in proliferator selection
@@ -49,23 +49,25 @@ namespace Bottleneck.UI
 
             ProtoRegistry.RegisterString("forceSpeed", "Force Speed Mode", "强制 生产加速 模式");
             ProtoRegistry.RegisterString("forceSpeedHover", "Max values calculated as if all all assemblers were set to 'Production Speedup'.", "假设每个生产设施使用 生产加速 模式计算理论最大值");
+
+            ProtoRegistry.RegisterString("recipePreText", "Recipe", "公式");
         }
 
-        public static string NeedLabel => "needLabel".Translate(Localization.language);
-        public static string CurrentLabel => "currentLabel".Translate(Localization.language);
-        public static string StackingLabel => "stackingLabel".Translate(Localization.language);
-        public static string UnderPoweredLabel => "underPoweredLabel".Translate(Localization.language);
-        public static string MissingSprayLabel => "missingSprayLabel".Translate(Localization.language);
-        public static string BottlenecksLabel => "bottlenecksLabel".Translate(Localization.language);
-        public static string ProliferatorCalculationDisabled => "proliferatorCalcDisabledLabel".Translate(Localization.language);
-        public static string ProliferatorCalculationDisabledHover => "proliferatorCalcDisabledHover".Translate(Localization.language);
-        public static string ProliferatorCalculationEnabled => "proliferatorCalcEnabledLabel".Translate(Localization.language);
-        public static string AssemblerSelectionMode => "assemblerSelection".Translate(Localization.language);
-        public static string AssemblerSelectionHover => "assemblerSelectionHover".Translate(Localization.language);
-        public static string ForceProductivityMode => "forceProductivity".Translate(Localization.language);
-        public static string ForceProductivityHover => "forceProductivityHover".Translate(Localization.language);
-        public static string ForceSpeedMode => "forceSpeed".Translate(Localization.language);
-        public static string ForceSpeedModeHover => "forceSpeedHover".Translate(Localization.language);
-
+        public static string NeedLabel => "needLabel".Translate(PluginConfig.GetLanguage());
+        public static string CurrentLabel => "currentLabel".Translate(PluginConfig.GetLanguage());
+        public static string StackingLabel => "stackingLabel".Translate(PluginConfig.GetLanguage());
+        public static string UnderPoweredLabel => "underPoweredLabel".Translate(PluginConfig.GetLanguage());
+        public static string MissingSprayLabel => "missingSprayLabel".Translate(PluginConfig.GetLanguage());
+        public static string BottlenecksLabel => "bottlenecksLabel".Translate(PluginConfig.GetLanguage());
+        public static string ProliferatorCalculationDisabled => "proliferatorCalcDisabledLabel".Translate(PluginConfig.GetLanguage());
+        public static string ProliferatorCalculationDisabledHover => "proliferatorCalcDisabledHover".Translate(PluginConfig.GetLanguage());
+        public static string ProliferatorCalculationEnabled => "proliferatorCalcEnabledLabel".Translate(PluginConfig.GetLanguage());
+        public static string AssemblerSelectionMode => "assemblerSelection".Translate(PluginConfig.GetLanguage());
+        public static string AssemblerSelectionHover => "assemblerSelectionHover".Translate(PluginConfig.GetLanguage());
+        public static string ForceProductivityMode => "forceProductivity".Translate(PluginConfig.GetLanguage());
+        public static string ForceProductivityHover => "forceProductivityHover".Translate(PluginConfig.GetLanguage());
+        public static string ForceSpeedMode => "forceSpeed".Translate(PluginConfig.GetLanguage());
+        public static string ForceSpeedModeHover => "forceSpeedHover".Translate(PluginConfig.GetLanguage());
+        public static string RecipePreText => "recipePreText".Translate(PluginConfig.GetLanguage());
     }
 }
