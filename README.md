@@ -46,7 +46,7 @@ For now installation is only supported through a mod manager, but, in general th
 ## Changelog
 
 ### v1.0.14 
-* Update: add (Google) translations for some UI elements 
+* Update: add zhCn translations provided by Ximu-Luya on Github (thanks for contribution)  
 
 ### v1.0.13 
 * Update: change fractionator theoretical max calculation to account for stacked belts & spray 

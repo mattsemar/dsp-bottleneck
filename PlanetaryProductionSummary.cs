@@ -140,7 +140,7 @@ namespace Bottleneck
                 return _prodSummary;
             }
 
-            var producersLabel = "producersLabel".Translate(Localization.language).ToLowerInvariant();
+            var producersLabel = "producersLabel".Translate(PluginConfig.GetLanguage()).ToLowerInvariant();
             var includedElements = _productions.GetRange(0, Math.Min(PluginConfig.productionPlanetCount.Value, _productions.Count))
                 .Select(prod => $"{prod.PlanetName}: {producersLabel}={prod.Producers}");
             _prodSummary = string.Join("\n", includedElements);
@@ -154,7 +154,7 @@ namespace Bottleneck
             {
                 return _consumerSummary;
             }
-            var consLabel = "consumersLabel".Translate(Localization.language).ToLowerInvariant();
+            var consLabel = "consumersLabel".Translate(PluginConfig.GetLanguage()).ToLowerInvariant();
             var includedElements = _consumers.GetRange(0, Math.Min(PluginConfig.productionPlanetCount.Value, _consumers.Count))
                 .Select(cons => $"{cons.PlanetName}: {consLabel}={cons.Consumers}");
             _consumerSummary = string.Join("\n", includedElements);

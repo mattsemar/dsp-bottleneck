@@ -157,7 +157,7 @@ namespace Bottleneck
                     for (int i = 0; i < value.neededCount; i++)
                     {
                         var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                        value.inputItemNames[i] = requiredItem.Name.Translate(Localization.language);
+                        value.inputItemNames[i] = requiredItem.Name.Translate(PluginConfig.GetLanguage());
                         value.inputItemId[i] = requiredItem.ID;
                         value.inputItemIndex[assemblerComponent.requires[i]] = i;
                     }
@@ -183,12 +183,12 @@ namespace Bottleneck
                 value = new ProductionDeficitItem
                 {
                     neededCount = assemblerComponent.requires.Length,
-                    recipeName = LDB.recipes.Select(recipeId).Name.Translate(Localization.language)
+                    recipeName = LDB.recipes.Select(recipeId).Name.Translate(PluginConfig.GetLanguage())
                 };
                 for (int i = 0; i < value.neededCount; i++)
                 {
                     var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                    value.inputItemNames[i] = requiredItem.Name.Translate(Localization.language);
+                    value.inputItemNames[i] = requiredItem.Name.Translate(PluginConfig.GetLanguage());
                     value.inputItemId[i] = requiredItem.ID;
                     value.inputItemIndex[assemblerComponent.requires[i]] = i;
                 }
@@ -286,7 +286,7 @@ namespace Bottleneck
 
                 if (productionDeficitItems.Count > 1)
                 {
-                    result.Append($"Recipe: {deficitItem.recipeName}, {tmpResultStr}");
+                    result.Append($"{Strings.RecipePreText}: {deficitItem.recipeName}, {tmpResultStr}");
                 }
                 else
                 {

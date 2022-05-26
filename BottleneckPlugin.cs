@@ -270,9 +270,9 @@ namespace Bottleneck
             if (!__instance.isDysonTab && __instance.gameData.localPlanet != null && instanceAstroBox.Items.Count > 2)
             {
                 int starId = __instance.gameData.localStar.id;
-                if (instanceAstroBox.Items[2] != "localSystemLabel".Translate(Localization.language))
+                if (instanceAstroBox.Items[2] != "localSystemLabel".Translate(PluginConfig.GetLanguage()))
                 {
-                    instanceAstroBox.Items.Insert(2, "localSystemLabel".Translate(Localization.language));
+                    instanceAstroBox.Items.Insert(2, "localSystemLabel".Translate(PluginConfig.GetLanguage()));
                     instanceAstroBox.ItemsData.Insert(2, starId * 100);
                 }
             }
@@ -297,7 +297,7 @@ namespace Bottleneck
                     // hide star systems, unless we get a hit for one of stars in system
                     currentSystemId = astroId;
                     var starName = UIRoot.instance.uiGame.statWindow.gameData.galaxy.StarById(astroId / 100).displayName;
-                    currentSystemName = starName + "空格行星系".Translate(Localization.language);
+                    currentSystemName = starName + "空格行星系".Translate(PluginConfig.GetLanguage());
                 }
                 else
                 {
@@ -492,7 +492,7 @@ namespace Bottleneck
 
         public void GetPrecursorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "prodDetailsLabel".Translate(Localization.language);
+            tipTitle = "prodDetailsLabel".Translate(PluginConfig.GetLanguage());
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -503,13 +503,13 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasPrecursors(productId))
-                tipTitle += "clickPrecursorText".Translate(Localization.language);
+                tipTitle += "clickPrecursorText".Translate(PluginConfig.GetLanguage());
             if (_productionLocations.ContainsKey(productId))
             {
                 if (_enableMadeOn)
                 {
-                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "controlClickLacking".Translate(Localization.language) : "";
-                    var producedOnText = "producedOnLabel".Translate(Localization.language);
+                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "controlClickLacking".Translate(PluginConfig.GetLanguage()) : "";
+                    var producedOnText = "producedOnLabel".Translate(PluginConfig.GetLanguage());
                     tipText = $"{parensMessage}<b>{producedOnText}</b>\r\n" + _productionLocations[productId].GetProducerSummary();
                     if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
@@ -527,7 +527,7 @@ namespace Bottleneck
 
         public void GetSuccessorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "conDetailsLabel".Translate(Localization.language);
+            tipTitle = "conDetailsLabel".Translate(PluginConfig.GetLanguage());
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -538,10 +538,10 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasConsumers(productId))
-                tipTitle += "clickConsumingText".Translate(Localization.language);
+                tipTitle += "clickConsumingText".Translate(PluginConfig.GetLanguage());
             if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
             { 
-                var consumedOnText = "consumedOnLabel".Translate(Localization.language);
+                var consumedOnText = "consumedOnLabel".Translate(PluginConfig.GetLanguage());
 
                 tipText = $"<b>{consumedOnText}</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
                 if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
@@ -753,7 +753,7 @@ namespace Bottleneck
             rectTxt.anchoredPosition = new Vector2(20, 0);
             objsToDestroy.Add(rectTxt.gameObject);
             Text text = rectTxt.gameObject.AddComponent<Text>();
-            text.text = "clearFilterLabel".Translate(Localization.language);
+            text.text = "clearFilterLabel".Translate(PluginConfig.GetLanguage());
             text.fontStyle = FontStyle.Normal;
             text.fontSize = 12;
             text.verticalOverflow = VerticalWrapMode.Overflow;
