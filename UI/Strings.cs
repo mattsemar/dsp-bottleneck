@@ -50,7 +50,7 @@ namespace Bottleneck.UI
             ProtoRegistry.RegisterString("forceSpeed", "Force Speed Mode", "强制 生产加速 模式");
             ProtoRegistry.RegisterString("forceSpeedHover", "Max values calculated as if all all assemblers were set to 'Production Speedup'.", "假设每个生产设施使用 生产加速 模式计算理论最大值");
 
-            ProtoRegistry.RegisterString("recipePreText", "Recipe", "公式");
+            ProtoRegistry.RegisterString("recipePreText", "Recipe", "配方");
         }
 
         public static string NeedLabel => "needLabel".Translate(PluginConfig.GetLanguage());
