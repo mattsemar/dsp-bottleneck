@@ -1,134 +1,49 @@
-# Bottleneck
+# Bottleneck / 瓶颈
 
-This mod adds some information to the stats panel to help find production bottlenecks. It will show the top 5 (configurable) planets an item is made on
-and also try to assess what your assemblers are stuck on (needing items, no power, stacking). It also adds some filter buttons for limiting the items shown to 
-only the precursor (or dependent) items to narrow down the search for bottlenecks
+这个模组向统计面板添加了一些额外的信息，以帮助您找到生产瓶颈。 它将显示生产物品的前 5 个（数量可配置）行星，
+并尝试检测您的生产设施因为什么导致生产瓶颈（需要物品， 电力不足， 物品堆叠）。
+它还添加了一些过滤按钮，用于将显示的项目限制为制作于（或用于制作）哪些物品，以缩小对瓶颈的搜索范围
 
 ![Example](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/screenshot_cn.png?raw=true)
 
-## BetterStats with Proliferator
+## 带有增产剂计算的 BetterStats
 
-This plugin contains a fork of BetterStats with support for Proliferator. To use it,
-you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats
-is completely optional, the Bottleneck plugin should work just fine when BetterStats is installed, the proliferator enhancements just won't be present.
-_Note: If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away_
+这个插件包含了一个支持增产剂计算的 BetterStats 分支。要使用它，您必须禁用 BetterStats 插件。
+分叉的 BetterStats 是完全可选的，安装 BetterStats 后，Bottleneck 插件应该可以正常工作，不会出现增产剂计算的增强功能。
 
-For production items that can be proliferated, buttons are added next to each item where you can choose between:
+_注意：如果 brokenmass 将[更改](https://github.com/DysonSphereMod/QOL/pull/125)合并到 BetterStats 中，那么这个分叉将消失_
 
-* Disable - don't consider Profilerator when determining Theoretical max production for the item  
-* Assembler setting - Use the assemblers current setting (more products or more speed) when calculating theoretical max
-* Force speed - Calculate theoretical max assuming every assembler is in Production Speedup mode
-* Force productivity - Calculate theoretical max assuming every assembler is in Extra Products mode. Only available for recipes that support extra products
+对于可以喷涂增产剂的生产项目，在每个项目旁边添加了按钮，您可以在其中进行选择：
+
+* 禁用 - 在计算项目的理论最大产量时不考虑 增产剂
+* 生产设施当前选择 - 计算理论最大值时使用生产设施当前选择模式（更多产品或更高速度）
+* 强制 生产加速 - 假设每个生产设施都处于 生产加速 模式，计算理论最大值
+* 强制 额外产出 - 假设每个生产设施都处于 额外产出 模式下，计算理论最大值。仅适用于支持 额外产出 的配方
 
 ![Proliferator](https://github.com/mattsemar/dsp-bottleneck/blob/master/Examples/stats_buttons.png?raw=true)
 
-## Config
+## 配置
 
-* ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
-* 'Disable Bottleneck' lets you disable the Bottleneck functionality of this mod and just focus on stats
-* 'Disable Proliferator Calculation' removes Proliferator from Theoretical max calculations completely
-* 'Planet Filter' removes non-production (or non-consumption) planets from list when a precursor/consumer item filter is active
-* 'System Filter' when Planet Filter is active add a "Star System" item the list for system with producers  
-* 'Include Second Level Items' when a precursor/consumer item filter is active also include grandparent / grandchild precursor/consumer   
+* 'ProductionPlanetCount' 允许在工具提示中显示更多 “生产于” 的行星（最多 15 个）
+* 'Disable Bottleneck' 可让您禁用此 mod 的瓶颈功能并只关注统计数据
+* 'Disable Proliferator Calculation' 将 增产剂 从理论最大值计算中完全移除
+* 'Planet Filter' 当前置材料 / 消耗设施 过滤器处于激活状态时，本配置会从列表中删除非生产（或非消耗）行星
+* 'System Filter' 当行星过滤器处于激活状态时，会在带有生产设施的系统列表中添加一个 “星系统” 项目  
+* 'Include Second Level Items' 当前置材料 / 消耗设施 过滤器处于激活状态时，“包括二级项目” 还包括祖父母 / 孙子的前置材料 / 消耗设施  
 
-## Notes
-This mod was originally planned as an enhancement to BetterStats by brokenmass.
+## 笔记
+这个模组最初计划是对 brokenmass 的 BetterStats 的改进。
 
-Planetary consumption/production is only calculated one time after the statistics window is opened. If you add machines to your factory while the stats window is
-open (maybe you're running at a very high resolution?) then you'll have to close and re-open the window to see those values update to reflect the change
+行星消耗 / 生产仅在统计面板打开后计算一次。如果您在统计面板打开时将生产设施添加到您的生产系统中（也许您正在以非常高分辨率运行？）
+那么您必须关闭并重新打开窗口来查看统计面板的更新
 
-## Installation
+## 安装
 
-For now installation is only supported through a mod manager, but, in general these mods must be installed first
+目前仅支持通过模组管理器进行安装，但通常必须先安装这些模组
 * CommonAPI-CommonAPI
 * xiaoye97-LDBTool
 
-## Changelog
+## 联系
+模组有 Bugs? 通过 discord 联系我: Semar#1983 或在 github 中创建issue
 
-### v1.0.14 
-* Update: add zhCn translations provided by Ximu-Luya on Github (thanks for contribution)  
-
-### v1.0.13 
-* Update: change fractionator theoretical max calculation to account for stacked belts & spray 
-
-### v1.0.12 
-* Update: adjust item tooltip to get rid of cannot craft in replicator message 
-
-### v1.0.11 
-* Update: add item tooltip when item icon is hovered in stats window (disable with "Disable Item Hover Tip" config property) 
-
-### v1.0.10 
-* Bugfix: Fix bug with planet filtering when matched planet count is smaller than 2 
-* Update: Add config property to disable filtering of planet list by precursor/consumer target
-* Update: Add config property to control whether 2nd level precursor/consumers are shown
-
-### v1.0.9
-* Update: Add support for Nebula (thanks starfi5h) 
-* Bugfix: Fix issue where Local System is added to astro list twice 
-
-### v1.0.8
-* Update: change so that when pre-cursor or successor filter is enabled, planet list is filtered to only planets that are producers or consumers of the item
-* Add "Local System" to planet dropdown
-
-### v1.0.7
-Update: update to sync with latest changes in game. 
-
-### v1.0.6
-Bugfix: fix labs not detecting stacking condition 
-
-### v1.0.5
-Bugfix: fix detection of non-productive assembler recipe default mode. Assemblers for antimatter treated as if they supported productivity mode 
-
-### v1.0.4
-Bugfix: fix initialization issue with enhanced stats version
-
-### v1.0.3
-Bugfix: resolve issue with initialization of Proliferator info when using BetterStats official was enabled
-
-### v1.0.2
-* Update: combined stats collection with bottleneck calculations
-* Update: added 'Disable Bottleneck' config to allow only BetterStats functionality to be used. Removes precursors, made on, etc.
-* Update: added detection for unsprayed items in bottleneck calculation
-
-### v1.0.1
-Bugfix: handle modded items that are created after this plugin is initted
-
-### v1.0.0
-* Update: removed dependency on BetterStats. Now when that plugin is not installed a local fork of it will be used instead 
-* Update: Account for usage of proliferator in local BetterStats fork
-* Update: Detect stacking for Ray Receivers generating critical photons
-
-### v0.1.4
-Update: Sync with update in game code that removed the 'outputing' field on assemblers and labs 
-
-### v0.1.3
-Bugfix: Changed low power check to be less sensitive. Should give fewer false positives 
-
-### v0.1.2
-Bugfix: Fixed issue where stats for modded items would not show up properly 
-
-### v0.1.1
-Bugfix: reduced the frequency of computation for planetary production/consumption to address some reported UI lag (thanks to thedoc31 for report) 
-
-### v0.1.0
-Feature: added support for filtering only precursors that are needed (hold control when clicking the precursor filter)
-Feature: added popup warning when a planet with too little power are detected (one popup per planet per game), use config property to disable
-Increased ProductionPlanetCount config property max to 35. 
-
-### v0.0.4
-Bugfix: fixed issue where multiple clear filter buttons would be added to stats window.  
-Bugfix: updated logic for determining whether assemblers/labs are currently stacking to match game better  
-
-### v0.0.3
-Bugfix: fixed exception in stats view when no tech is currently being researched. (Thanks Valoneu for report)
-
-### v0.0.2
-Stopgap bugfix, ended up being useless
-
-### v0.0.1
-Initial version
-
-## Contact
-Bugs? Contact me on discord: Semar#1983 or create an issue in the github repository.
-
-<div>Icons made by <a href="https://www.flaticon.com/authors/ddara" title="dDara">dDara</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+<div>模组图标由<a href="https://www.flaticon.com/authors/ddara" title="dDara">dDara</a>制作 来自 <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
