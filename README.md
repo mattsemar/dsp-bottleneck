@@ -49,6 +49,9 @@ For now installation is only supported through a mod manager, but, in general th
 
 ## Changelog
 
+### v1.0.15 
+* Update: add translated readme provided by Ximu-Luya on Github (thanks for contribution)  
+
 ### v1.0.14 
 * Update: add zhCn translations provided by Ximu-Luya on Github (thanks for contribution)  
 

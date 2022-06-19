@@ -673,7 +673,6 @@ namespace Bottleneck.Stats
         }
 
         // speed of fastest belt(mk3 belt) is 1800 items per minute
-        public const float BELT_MAX_ITEMS_PER_MINUTE = 1800;
         public const float TICKS_PER_SEC = 60.0f;
         private const float RAY_RECEIVER_GRAVITON_LENS_CONSUMPTION_RATE_PER_MIN = 0.1f;
 
