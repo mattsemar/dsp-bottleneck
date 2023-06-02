@@ -199,33 +199,6 @@ namespace Bottleneck.Stats
             return value.ToString();
         }
 
-        private static float ReverseFormat(string value)
-        {
-            string[] parts = value.Split(' ');
-            float multiplier;
-            string numericValue;
-
-            if (parts.Length > 1)
-            {
-                multiplier = parts[1] == "k" ? 1000 : (parts[1] == "M" ? 1000000 : (parts[1] == "G" ? 1000000000 : 1));
-                numericValue = parts[0];
-            }
-            else
-            {
-                multiplier = 1;
-                numericValue = parts[0].Replace(",", ".");
-            }
-
-            try
-            {
-                return float.Parse(numericValue, CultureInfo.InvariantCulture) * multiplier;
-            }
-            catch (FormatException ex)
-            {
-                throw new ArgumentException("Invalid format String : '" + value + "' (parsed as " + numericValue + " * " + multiplier + ")", nameof(value), ex);
-            }
-        }
-
         private static EnhancedUIProductEntryElements EnhanceUIProductEntry(UIProductEntry __instance)
         {
             var parent = __instance.itemIcon.transform.parent;
@@ -548,9 +521,9 @@ namespace Bottleneck.Stats
             string originalProductText = __instance.productText.text.Trim();
             string originalConsumeText = __instance.consumeText.text.Trim();
 
-
-            float originalProductValue = ReverseFormat(originalProductText);
-            float originalConsumeValue = ReverseFormat(originalConsumeText);
+            float lvDivisor = isTotalTimeWindow ? 1f : (float)__instance.lvDivisors[__instance.productionStatWindow.timeLevel];
+            float originalProductValue = __instance.entryData.production / lvDivisor;
+            float originalConsumeValue = __instance.entryData.consumption / lvDivisor;
 
             string producers = "0";
             string consumers = "0";
