@@ -53,21 +53,21 @@ namespace Bottleneck.UI
             ProtoRegistry.RegisterString("recipePreText", "Recipe", "配方");
         }
 
-        public static string NeedLabel => "needLabel".Translate(PluginConfig.GetLanguage());
-        public static string CurrentLabel => "currentLabel".Translate(PluginConfig.GetLanguage());
-        public static string StackingLabel => "stackingLabel".Translate(PluginConfig.GetLanguage());
-        public static string UnderPoweredLabel => "underPoweredLabel".Translate(PluginConfig.GetLanguage());
-        public static string MissingSprayLabel => "missingSprayLabel".Translate(PluginConfig.GetLanguage());
-        public static string BottlenecksLabel => "bottlenecksLabel".Translate(PluginConfig.GetLanguage());
-        public static string ProliferatorCalculationDisabled => "proliferatorCalcDisabledLabel".Translate(PluginConfig.GetLanguage());
-        public static string ProliferatorCalculationDisabledHover => "proliferatorCalcDisabledHover".Translate(PluginConfig.GetLanguage());
-        public static string ProliferatorCalculationEnabled => "proliferatorCalcEnabledLabel".Translate(PluginConfig.GetLanguage());
-        public static string AssemblerSelectionMode => "assemblerSelection".Translate(PluginConfig.GetLanguage());
-        public static string AssemblerSelectionHover => "assemblerSelectionHover".Translate(PluginConfig.GetLanguage());
-        public static string ForceProductivityMode => "forceProductivity".Translate(PluginConfig.GetLanguage());
-        public static string ForceProductivityHover => "forceProductivityHover".Translate(PluginConfig.GetLanguage());
-        public static string ForceSpeedMode => "forceSpeed".Translate(PluginConfig.GetLanguage());
-        public static string ForceSpeedModeHover => "forceSpeedHover".Translate(PluginConfig.GetLanguage());
-        public static string RecipePreText => "recipePreText".Translate(PluginConfig.GetLanguage());
+        public static string NeedLabel => "needLabel".Translate();
+        public static string CurrentLabel => "currentLabel".Translate();
+        public static string StackingLabel => "stackingLabel".Translate();
+        public static string UnderPoweredLabel => "underPoweredLabel".Translate();
+        public static string MissingSprayLabel => "missingSprayLabel".Translate();
+        public static string BottlenecksLabel => "bottlenecksLabel".Translate();
+        public static string ProliferatorCalculationDisabled => "proliferatorCalcDisabledLabel".Translate();
+        public static string ProliferatorCalculationDisabledHover => "proliferatorCalcDisabledHover".Translate();
+        public static string ProliferatorCalculationEnabled => "proliferatorCalcEnabledLabel".Translate();
+        public static string AssemblerSelectionMode => "assemblerSelection".Translate();
+        public static string AssemblerSelectionHover => "assemblerSelectionHover".Translate();
+        public static string ForceProductivityMode => "forceProductivity".Translate();
+        public static string ForceProductivityHover => "forceProductivityHover".Translate();
+        public static string ForceSpeedMode => "forceSpeed".Translate();
+        public static string ForceSpeedModeHover => "forceSpeedHover".Translate();
+        public static string RecipePreText => "recipePreText".Translate();
     }
 }

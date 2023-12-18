@@ -43,7 +43,7 @@ namespace Bottleneck.UI
 
         private static string GetItemName(int itemId)
         {
-            return LDB.items.Select(itemId).Name.Translate(PluginConfig.GetLanguage());
+            return LDB.items.Select(itemId).Name.Translate();
         }
     }
 }
