@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Bottleneck</AssemblyName>
     <Description>Production bottleneck finder</Description>
-    <Version>1.0.15</Version>
+    <Version>1.0.16</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>9.0</LangVersion>
   </PropertyGroup>
@@ -18,7 +18,6 @@
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="DysonSphereProgram.GameLibs" Version="*-*" />
-    <PackageReference Include="DysonSphereProgram.Modding.CommonAPI" Version="*-*" />
     <PackageReference Include="DysonSphereProgram.Modding.NebulaMultiplayerModApi" Version="1.2.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2018.4.12" IncludeAssets="compile" />
   </ItemGroup>
