@@ -6,7 +6,6 @@ using Bottleneck.Nebula;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
-
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -53,7 +52,7 @@ namespace Bottleneck
             _instance = this;
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
-            Logger.LogDebug(Config);
+            _harmony.PatchAll(typeof(Strings));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 
@@ -265,9 +264,9 @@ namespace Bottleneck
             if (!__instance.isDysonTab && __instance.gameData.localPlanet != null && instanceAstroBox.Items.Count > 2)
             {
                 int starId = __instance.gameData.localStar.id;
-                if (instanceAstroBox.Items[2] != "localSystemLabel".Translate())
+                if (instanceAstroBox.Items[2] != Strings.LocalSystemLabel)
                 {
-                    instanceAstroBox.Items.Insert(2, "localSystemLabel".Translate());
+                    instanceAstroBox.Items.Insert(2, Strings.LocalSystemLabel);
                     instanceAstroBox.ItemsData.Insert(2, starId * 100);
                 }
             }
@@ -487,7 +486,7 @@ namespace Bottleneck
 
         public void GetPrecursorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "prodDetailsLabel".Translate();
+            tipTitle = Strings.ProdDetailsLabel;
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -498,13 +497,13 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasPrecursors(productId))
-                tipTitle += "clickPrecursorText".Translate();
+                tipTitle += Strings.ClickPrecursorText;
             if (_productionLocations.ContainsKey(productId))
             {
                 if (_enableMadeOn)
                 {
-                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "controlClickLacking".Translate() : "";
-                    var producedOnText = "producedOnLabel".Translate();
+                    var parensMessage = ItemUtil.HasPrecursors(productId) ? Strings.ControlClickLacking : "";
+                    var producedOnText = Strings.ProducedOnLabel;
                     tipText = $"{parensMessage}<b>{producedOnText}</b>\r\n" + _productionLocations[productId].GetProducerSummary();
                     if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
@@ -522,7 +521,7 @@ namespace Bottleneck
 
         public void GetSuccessorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "conDetailsLabel".Translate();
+            tipTitle = Strings.ConDetailsLabel;
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -533,10 +532,10 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasConsumers(productId))
-                tipTitle += "clickConsumingText".Translate();
+                tipTitle += Strings.ClickConsumingText;
             if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
             { 
-                var consumedOnText = "consumedOnLabel".Translate();
+                var consumedOnText = Strings.ConsumedOnLabel;
 
                 tipText = $"<b>{consumedOnText}</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
                 if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
@@ -748,7 +747,7 @@ namespace Bottleneck
             rectTxt.anchoredPosition = new Vector2(20, 0);
             objsToDestroy.Add(rectTxt.gameObject);
             Text text = rectTxt.gameObject.AddComponent<Text>();
-            text.text = "clearFilterLabel".Translate();
+            text.text = Strings.ClearFilterLabel;
             text.fontStyle = FontStyle.Normal;
             text.fontSize = 12;
             text.verticalOverflow = VerticalWrapMode.Overflow;

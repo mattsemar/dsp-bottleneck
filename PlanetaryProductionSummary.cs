@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bottleneck.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -140,7 +141,7 @@ namespace Bottleneck
                 return _prodSummary;
             }
 
-            var producersLabel = "producersLabel".Translate().ToLowerInvariant();
+            var producersLabel = Strings.ProducersLabel;
             var includedElements = _productions.GetRange(0, Math.Min(PluginConfig.productionPlanetCount.Value, _productions.Count))
                 .Select(prod => $"{prod.PlanetName}: {producersLabel}={prod.Producers}");
             _prodSummary = string.Join("\n", includedElements);
@@ -154,7 +155,7 @@ namespace Bottleneck
             {
                 return _consumerSummary;
             }
-            var consLabel = "consumersLabel".Translate().ToLowerInvariant();
+            var consLabel = Strings.ConsumersLabel;
             var includedElements = _consumers.GetRange(0, Math.Min(PluginConfig.productionPlanetCount.Value, _consumers.Count))
                 .Select(cons => $"{cons.PlanetName}: {consLabel}={cons.Consumers}");
             _consumerSummary = string.Join("\n", includedElements);
