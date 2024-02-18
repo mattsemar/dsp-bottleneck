@@ -157,7 +157,7 @@ namespace Bottleneck
                     for (int i = 0; i < value.neededCount; i++)
                     {
                         var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                        value.inputItemNames[i] = requiredItem.Name.Translate(PluginConfig.GetLanguage());
+                        value.inputItemNames[i] = requiredItem.Name.Translate();
                         value.inputItemId[i] = requiredItem.ID;
                         value.inputItemIndex[assemblerComponent.requires[i]] = i;
                     }
@@ -183,12 +183,12 @@ namespace Bottleneck
                 value = new ProductionDeficitItem
                 {
                     neededCount = assemblerComponent.requires.Length,
-                    recipeName = LDB.recipes.Select(recipeId).Name.Translate(PluginConfig.GetLanguage())
+                    recipeName = LDB.recipes.Select(recipeId).Name.Translate()
                 };
                 for (int i = 0; i < value.neededCount; i++)
                 {
                     var requiredItem = LDB.items.Select(assemblerComponent.requires[i]);
-                    value.inputItemNames[i] = requiredItem.Name.Translate(PluginConfig.GetLanguage());
+                    value.inputItemNames[i] = requiredItem.Name.Translate();
                     value.inputItemId[i] = requiredItem.ID;
                     value.inputItemIndex[assemblerComponent.requires[i]] = i;
                 }

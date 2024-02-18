@@ -6,8 +6,6 @@ using Bottleneck.Nebula;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
-using CommonAPI;
-using CommonAPI.Systems;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,8 +14,7 @@ namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency(CommonAPIPlugin.GUID)]
-    [CommonAPISubmoduleDependency(nameof(ProtoRegistry))]
+
     public class BottleneckPlugin : BaseUnityPlugin
     {
         public static BottleneckPlugin Instance => _instance;
@@ -53,12 +50,9 @@ namespace Bottleneck
         {
             Log.logger = Logger;
             _instance = this;
-            using (ProtoRegistry.StartModLoad(PluginInfo.PLUGIN_GUID))
-            {
-                Strings.Init();
-            }
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
+            _harmony.PatchAll(typeof(Strings));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 
@@ -270,9 +264,9 @@ namespace Bottleneck
             if (!__instance.isDysonTab && __instance.gameData.localPlanet != null && instanceAstroBox.Items.Count > 2)
             {
                 int starId = __instance.gameData.localStar.id;
-                if (instanceAstroBox.Items[2] != "localSystemLabel".Translate(PluginConfig.GetLanguage()))
+                if (instanceAstroBox.Items[2] != Strings.LocalSystemLabel)
                 {
-                    instanceAstroBox.Items.Insert(2, "localSystemLabel".Translate(PluginConfig.GetLanguage()));
+                    instanceAstroBox.Items.Insert(2, Strings.LocalSystemLabel);
                     instanceAstroBox.ItemsData.Insert(2, starId * 100);
                 }
             }
@@ -297,7 +291,7 @@ namespace Bottleneck
                     // hide star systems, unless we get a hit for one of stars in system
                     currentSystemId = astroId;
                     var starName = UIRoot.instance.uiGame.statWindow.gameData.galaxy.StarById(astroId / 100).displayName;
-                    currentSystemName = starName + "空格行星系".Translate(PluginConfig.GetLanguage());
+                    currentSystemName = starName + "空格行星系".Translate();
                 }
                 else
                 {
@@ -492,7 +486,7 @@ namespace Bottleneck
 
         public void GetPrecursorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "prodDetailsLabel".Translate(PluginConfig.GetLanguage());
+            tipTitle = Strings.ProdDetailsLabel;
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -503,13 +497,13 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasPrecursors(productId))
-                tipTitle += "clickPrecursorText".Translate(PluginConfig.GetLanguage());
+                tipTitle += Strings.ClickPrecursorText;
             if (_productionLocations.ContainsKey(productId))
             {
                 if (_enableMadeOn)
                 {
-                    var parensMessage = ItemUtil.HasPrecursors(productId) ? "controlClickLacking".Translate(PluginConfig.GetLanguage()) : "";
-                    var producedOnText = "producedOnLabel".Translate(PluginConfig.GetLanguage());
+                    var parensMessage = ItemUtil.HasPrecursors(productId) ? Strings.ControlClickLacking : "";
+                    var producedOnText = Strings.ProducedOnLabel;
                     tipText = $"{parensMessage}<b>{producedOnText}</b>\r\n" + _productionLocations[productId].GetProducerSummary();
                     if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
                         tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
@@ -527,7 +521,7 @@ namespace Bottleneck
 
         public void GetSuccessorButtonTip(int productId, out string tipTitle, out string tipText)
         {
-            tipTitle = "conDetailsLabel".Translate(PluginConfig.GetLanguage());
+            tipTitle = Strings.ConDetailsLabel;
             tipText = "";
 
             if (NebulaCompat.IsClient)
@@ -538,10 +532,10 @@ namespace Bottleneck
             }
 
             if (ItemUtil.HasConsumers(productId))
-                tipTitle += "clickConsumingText".Translate(PluginConfig.GetLanguage());
+                tipTitle += Strings.ClickConsumingText;
             if (_productionLocations.ContainsKey(productId) && _enableMadeOn)
             { 
-                var consumedOnText = "consumedOnLabel".Translate(PluginConfig.GetLanguage());
+                var consumedOnText = Strings.ConsumedOnLabel;
 
                 tipText = $"<b>{consumedOnText}</b>\r\n" + _productionLocations[productId].GetConsumerSummary();
                 if (_productionLocations[productId].ConsumerPlanetCount() > PluginConfig.productionPlanetCount.Value)
@@ -753,7 +747,7 @@ namespace Bottleneck
             rectTxt.anchoredPosition = new Vector2(20, 0);
             objsToDestroy.Add(rectTxt.gameObject);
             Text text = rectTxt.gameObject.AddComponent<Text>();
-            text.text = "clearFilterLabel".Translate(PluginConfig.GetLanguage());
+            text.text = Strings.ClearFilterLabel;
             text.fontStyle = FontStyle.Normal;
             text.fontSize = 12;
             text.verticalOverflow = VerticalWrapMode.Overflow;

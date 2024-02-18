@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using BepInEx.Logging;
 using Bottleneck.Nebula;
+using Bottleneck.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -199,33 +200,6 @@ namespace Bottleneck.Stats
             return value.ToString();
         }
 
-        private static float ReverseFormat(string value)
-        {
-            string[] parts = value.Split(' ');
-            float multiplier;
-            string numericValue;
-
-            if (parts.Length > 1)
-            {
-                multiplier = parts[1] == "k" ? 1000 : (parts[1] == "M" ? 1000000 : (parts[1] == "G" ? 1000000000 : 1));
-                numericValue = parts[0];
-            }
-            else
-            {
-                multiplier = 1;
-                numericValue = parts[0].Replace(",", ".");
-            }
-
-            try
-            {
-                return float.Parse(numericValue, CultureInfo.InvariantCulture) * multiplier;
-            }
-            catch (FormatException ex)
-            {
-                throw new ArgumentException("Invalid format String : '" + value + "' (parsed as " + numericValue + " * " + multiplier + ")", nameof(value), ex);
-            }
-        }
-
         private static EnhancedUIProductEntryElements EnhanceUIProductEntry(UIProductEntry __instance)
         {
             var parent = __instance.itemIcon.transform.parent;
@@ -297,29 +271,29 @@ namespace Bottleneck.Stats
             __instance.consumeUnitLabel.GetComponent<RectTransform>().anchoredPosition = new Vector2(initialXOffset + valuesWidth + 4, -4);
 
             var maxProductionLabel = CopyText(__instance.productLabel, new Vector2(maxOffset, 0));
-            maxProductionLabel.text = "theoreticalMaxLabel".Translate(PluginConfig.GetLanguage()); 
+            maxProductionLabel.text = Strings.TheoreticalMaxLabel; 
             var maxProductionValue = CopyText(__instance.productText, new Vector2(maxOffset, 0));
             maxProductionValue.text = "0";
             var maxProductionUnit = CopyText(__instance.productUnitLabel, new Vector2(maxOffset, 0));
-            maxProductionUnit.text = "perMinLabel".Translate(PluginConfig.GetLanguage());
+            maxProductionUnit.text = Strings.PerMinLabel;
 
             var maxConsumptionLabel = CopyText(__instance.consumeLabel, new Vector2(maxOffset, 0));
-            maxConsumptionLabel.text = "theoreticalMaxLabel".Translate(PluginConfig.GetLanguage());
+            maxConsumptionLabel.text = Strings.TheoreticalMaxLabel;
             var maxConsumptionValue = CopyText(__instance.consumeText, new Vector2(maxOffset, 0));
             maxConsumptionValue.text = "0";
             var maxConsumptionUnit = CopyText(__instance.consumeUnitLabel, new Vector2(maxOffset, 0));
-            maxConsumptionUnit.text = "perMinLabel";
+            maxConsumptionUnit.text = Strings.PerMinLabel;
 
             var counterProductionLabel = CopyText(__instance.productLabel, new Vector2(-initialXOffset, 0));
             counterProductionLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(60, 40);
-            counterProductionLabel.text = "producersLabel".Translate(PluginConfig.GetLanguage());
+            counterProductionLabel.text = Strings.ProducersLabel;
             var counterProductionValue = CopyText(__instance.productText, new Vector2(-initialXOffset, 0));
             counterProductionValue.GetComponent<RectTransform>().sizeDelta = new Vector2(60, 40);
             counterProductionValue.text = "0";
 
             var counterConsumptionLabel = CopyText(__instance.consumeLabel, new Vector2(-initialXOffset, 0));
             counterConsumptionLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(60, 40);
-            counterConsumptionLabel.text = "consumersLabel".Translate(PluginConfig.GetLanguage());
+            counterConsumptionLabel.text = Strings.ConsumersLabel;
             var counterConsumptionValue = CopyText(__instance.consumeText, new Vector2(-initialXOffset, 0));
             counterConsumptionValue.GetComponent<RectTransform>().sizeDelta = new Vector2(60, 40);
             counterConsumptionValue.text = "0";
@@ -419,7 +393,7 @@ namespace Bottleneck.Stats
             rectTxt.anchoredPosition = new Vector2(20, 0);
 
             Text text = rectTxt.gameObject.AddComponent<Text>();
-            text.text = "dispPerSecLabel".Translate(PluginConfig.GetLanguage());
+            text.text = Strings.DispPerSecLabel;
             text.fontStyle = FontStyle.Normal;
             text.fontSize = 14;
             text.verticalOverflow = VerticalWrapMode.Overflow;
@@ -468,7 +442,7 @@ namespace Bottleneck.Stats
             _placeholder.alignment = TextAnchor.MiddleLeft;
             _placeholder.supportRichText = false;
             _placeholder.horizontalOverflow = HorizontalWrapMode.Overflow;
-            _placeholder.text = "filterLabel".Translate(PluginConfig.GetLanguage());
+            _placeholder.text = Strings.FilterLabel;
             (_placeholder.transform as RectTransform).sizeDelta = new Vector2(90, 30);
             (_placeholder.transform as RectTransform).anchoredPosition = new Vector2(5, 0);
 
@@ -548,16 +522,16 @@ namespace Bottleneck.Stats
             string originalProductText = __instance.productText.text.Trim();
             string originalConsumeText = __instance.consumeText.text.Trim();
 
-
-            float originalProductValue = ReverseFormat(originalProductText);
-            float originalConsumeValue = ReverseFormat(originalConsumeText);
+            float lvDivisor = isTotalTimeWindow ? 1f : (float)__instance.lvDivisors[__instance.productionStatWindow.timeLevel];
+            float originalProductValue = __instance.entryData.production / lvDivisor;
+            float originalConsumeValue = __instance.entryData.consumption / lvDivisor;
 
             string producers = "0";
             string consumers = "0";
             string maxProduction = "0";
             string maxConsumption = "0";
-            string unitRate = PluginConfig.displayPerSecond.Value ? "perSecLabel".Translate(PluginConfig.GetLanguage()) : "perMinLabel".Translate(PluginConfig.GetLanguage());
-            string unit = isTotalTimeWindow ? "" : "perMinLabel".Translate(PluginConfig.GetLanguage());
+            string unitRate = PluginConfig.displayPerSecond.Value ? Strings.PerSecLabel : Strings.PerMinLabel;
+            string unit = isTotalTimeWindow ? "" : Strings.PerMinLabel;
             int divider = 1;
             bool alertOnLackOfProduction = false;
             bool warnOnHighMaxConsumption = false;
@@ -566,7 +540,7 @@ namespace Bottleneck.Stats
             if (PluginConfig.displayPerSecond.Value)
             {
                 divider = 60;
-                unit = !isTotalTimeWindow ? "perSecLabel".Translate(PluginConfig.GetLanguage()) : unit;
+                unit = !isTotalTimeWindow ? Strings.PerSecLabel : unit;
 
                 if (!isTotalTimeWindow)
                 {
